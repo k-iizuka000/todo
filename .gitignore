@@ -1,0 +1,6 @@
+.vscode
+*/*.class
+.mvn/*
+mvnw
+mvnw.cmd
+target/*
