@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>TODOリスト</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/css/bootstrap.min.css">
+</head>
+<body class="p-3">
+  <div class="container">
+    <h1>TODOリスト (MVP)</h1>
+    <div id="todo-list"></div>
+    
+    <form id="todo-form" class="row mt-3">
+      <div class="col-md-4">
+        <input type="text" id="title" class="form-control" placeholder="TODOタイトル" required>
+      </div>
+      <div class="col-md-5">
+        <input type="text" id="description" class="form-control" placeholder="詳細">
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100">追加</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const todoListContainer = document.getElementById('todo-list');
+    const todoForm = document.getElementById('todo-form');
+
+    async function fetchTodos() {
+      const res = await fetch('/api/todos');
+      const todos = await res.json();
+      renderTodos(todos);
+    }
+
+    function renderTodos(todos) {
+      let html = '<ul class="list-group">';
+      todos.forEach(todo => {
+        html += `
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <input type="checkbox" ${todo.completed ? 'checked' : ''} 
+                     onchange="toggleComplete(${todo.id}, ${!todo.completed})">
+              <strong>${todo.title}</strong>
+              <p class="mb-0">${todo.description || ''}</p>
+            </div>
+            <div>
+              <button class="btn btn-sm btn-success" onclick="editTodo(${todo.id})">編集</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteTodo(${todo.id})">削除</button>
+            </div>
+          </li>
+        `;
+      });
+      html += '</ul>';
+      todoListContainer.innerHTML = html;
+    }
+
+    todoForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      await fetch('/api/todos', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({title, description, completed:false})
+      });
+      todoForm.reset();
+      fetchTodos();
+    });
+
+    async function deleteTodo(id) {
+      await fetch('/api/todos/' + id, {method:'DELETE'});
+      fetchTodos();
+    }
+
+    async function toggleComplete(id, completed) {
+      await fetch('/api/todos/' + id, {
+        method: 'PATCH',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({completed})
+      });
+      fetchTodos();
+    }
+
+    function editTodo(id) {
+      alert('編集機能はMVP段階のため未実装の例です。ID:'+id);
+    }
+
+    fetchTodos();
+  </script>
+</body>
+</html> 

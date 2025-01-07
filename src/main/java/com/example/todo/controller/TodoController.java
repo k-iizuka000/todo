@@ -2,6 +2,8 @@ package com.example.todo.controller;
 
 import com.example.todo.entity.Todo;
 import com.example.todo.service.TodoService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,27 +19,30 @@ public class TodoController {
     }
 
     @GetMapping
-    public List<Todo> getTodos() {
-        return todoService.getAllTodos();
+    public ResponseEntity<List<Todo>> getTodos() {
+        return ResponseEntity.ok(todoService.getAllTodos());
     }
 
     @PostMapping
-    public Todo createTodo(@RequestBody Todo todo) {
-        return todoService.createTodo(todo);
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<Todo> createTodo(@RequestBody Todo todo) {
+        return new ResponseEntity<>(todoService.createTodo(todo), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public Todo updateTodo(@PathVariable Long id, @RequestBody Todo todo) {
-        return todoService.updateTodo(id, todo);
+    public ResponseEntity<Todo> updateTodo(@PathVariable Long id, @RequestBody Todo todo) {
+        return ResponseEntity.ok(todoService.updateTodo(id, todo));
     }
 
     @PatchMapping("/{id}")
-    public Todo toggleComplete(@PathVariable Long id, @RequestBody Todo todo) {
-        return todoService.toggleComplete(id, todo.isCompleted());
+    public ResponseEntity<Todo> toggleComplete(@PathVariable Long id, @RequestBody Todo todo) {
+        return ResponseEntity.ok(todoService.toggleComplete(id, todo.isCompleted()));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTodo(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> deleteTodo(@PathVariable Long id) {
         todoService.deleteTodo(id);
+        return ResponseEntity.noContent().build();
     }
 }
