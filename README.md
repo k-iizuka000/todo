@@ -16,6 +16,14 @@
 4. **TODO削除**: 不要になったTODOを削除  
 5. **完了状態の切り替え**: TODOを完了/未完了に更新  
 
+## 追加機能
+
+- **編集機能の実装**: TODOを編集できるようにします。編集ボタンをクリックすると、入力フォームに既存のTODO情報が表示され、更新が可能になります。
+
+- **削除時の確認ダイアログ**: 削除ボタンを押した際に確認ダイアログを表示し、ユーザーが削除を確認できるようにします。
+
+- **完了タスクの非表示と表示切替ボタン**: チェックがついたタスクを非表示にし、"完了タスクを表示"ボタンを追加して、完了したタスクを再表示できるようにします。
+
 ## システム構成
 ```
 [ブラウザ] --(HTTP)--> [Spring Bootコンテナ : 8080] --(内部ネットワーク)--> [MySQLコンテナ : 3306]
@@ -109,6 +117,7 @@
   <meta charset="UTF-8" />
   <title>TODOリスト</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.1.3/cosmo/bootstrap.min.css">
 </head>
 <body class="p-3">
   <div class="container">
@@ -120,10 +129,10 @@
         <input type="text" id="title" class="form-control" placeholder="TODOタイトル" required>
       </div>
       <div class="col-md-5">
-        <input type="text" id="description" class="form-control" placeholder="詳細">
+        <input type="date" id="due-date" class="form-control" placeholder="期限">
       </div>
       <div class="col-md-3">
-        <button type="submit" class="btn btn-primary w-100">追加</button>
+        <button type="submit" class="btn btn-primary w-100" style="background-color: #ff69b4; border-color: #ff69b4;">追加</button>
       </div>
     </form>
   </div>
@@ -148,12 +157,12 @@
             <div>
               <input type="checkbox" ${todo.completed ? 'checked' : ''} 
                      onchange="toggleComplete(${todo.id}, ${!todo.completed})">
-              <strong>${todo.title}</strong>
-              <p class="mb-0">${todo.description || ''}</p>
+              <strong style="text-decoration: ${todo.completed ? 'line-through' : 'none'};">${todo.title}</strong>
+              <p class="mb-0">期限: ${todo.dueDate || '未設定'}</p>
             </div>
             <div>
-              <button class="btn btn-sm btn-success" onclick="editTodo(${todo.id})">編集</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteTodo(${todo.id})">削除</button>
+              <button class="btn btn-sm btn-success" style="background-color: #32cd32; border-color: #32cd32;" onclick="editTodo(${todo.id})">編集</button>
+              <button class="btn btn-sm btn-danger" style="background-color: #ff4500; border-color: #ff4500;" onclick="deleteTodo(${todo.id})">削除</button>
             </div>
           </li>
         `;

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -19,6 +20,14 @@ public class TodoService {
 
     public List<Todo> getAllTodos() {
         return todoRepository.findAll();
+    }
+
+    public Optional<Todo> findById(Long id) {
+        return todoRepository.findById(id);
+    }
+
+    public Todo save(Todo todo) {
+        return todoRepository.save(todo);
     }
 
     public Todo getTodoById(Long id) {
