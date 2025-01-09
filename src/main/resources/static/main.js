@@ -172,8 +172,11 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       const checkbox = document.querySelector(`input[type="checkbox"][onchange="toggleTodoCompletion(${id})"]`);
       const response = await fetch(`/api/todos/${id}/toggle`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' }
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
       });
       if (!response.ok) throw new Error('完了状態の更新に失敗しました');
       fetchTodos();
