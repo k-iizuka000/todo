@@ -16,3 +16,4 @@ COPY src/main/resources/static ./src/main/resources/static
 RUN mvn clean package -DskipTests
 
 CMD ["java", "-jar", "target/todo-mvp-0.0.1-SNAPSHOT.jar"]
+

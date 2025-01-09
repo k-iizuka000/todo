@@ -38,6 +38,11 @@ public class TodoController {
         return ResponseEntity.ok(updatedTodo);
     }
 
+    @PatchMapping("/{id}/toggle")
+    public ResponseEntity<Todo> toggleTodo(@PathVariable Long id) {
+        return ResponseEntity.ok(todoService.toggleComplete(id));
+    }
+
     @PatchMapping("/{id}")
     public ResponseEntity<Todo> toggleComplete(@PathVariable Long id, @RequestBody Todo todo) {
         return ResponseEntity.ok(todoService.toggleComplete(id, todo.isCompleted()));
@@ -54,5 +59,31 @@ public class TodoController {
     public ResponseEntity<Todo> getTodoById(@PathVariable Long id) {
         Todo todo = todoService.getTodoById(id);
         return ResponseEntity.ok(todo);
+    }
+
+    @GetMapping("/{parentId}/subtasks")
+    public ResponseEntity<List<Todo>> getSubtasks(@PathVariable Long parentId) {
+        List<Todo> subtasks = todoService.getSubtasks(parentId);
+        return ResponseEntity.ok(subtasks);
+    }
+
+    @PostMapping("/{parentId}/subtasks")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<Todo> addSubtask(@PathVariable Long parentId, @RequestBody Todo subtask) {
+        Todo createdSubtask = todoService.addSubtask(parentId, subtask);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdSubtask);
+    }
+
+    @PutMapping("/{parentId}/subtasks/{subtaskId}")
+    public ResponseEntity<Todo> updateSubtask(@PathVariable Long parentId, @PathVariable Long subtaskId, @RequestBody Todo subtaskDetails) {
+        Todo updatedSubtask = todoService.updateSubtask(parentId, subtaskId, subtaskDetails);
+        return ResponseEntity.ok(updatedSubtask);
+    }
+
+    @DeleteMapping("/{parentId}/subtasks/{subtaskId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> deleteSubtask(@PathVariable Long parentId, @PathVariable Long subtaskId) {
+        todoService.deleteSubtask(parentId, subtaskId);
+        return ResponseEntity.noContent().build();
     }
 }
