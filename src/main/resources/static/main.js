@@ -3,6 +3,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const todoList = document.getElementById('todo-list');
   let showCompleted = true;
 
+  // 初期状態でボタンのテキストを設定
+  const toggleButton = document.getElementById('toggle-visibility-btn');
+  if (toggleButton) {
+    toggleButton.querySelector('.toggle-text').textContent = '完了タスクを非表示';
+  }
+
   // エラー表示関数
   function showError(message, containerId = 'alert-container') {
     const container = document.getElementById(containerId);
@@ -32,19 +38,23 @@ document.addEventListener('DOMContentLoaded', function() {
   function renderTodos(todos) {
     todoList.innerHTML = '';
     todos.forEach(todo => {
-      renderTodoItem(todo, todoList);
+      const todoItem = renderTodoItem(todo);
+      // 初期表示時に完了タスクの表示/非表示を設定
+      if (!showCompleted && todo.completed) {
+        todoItem.classList.add('d-none');
+      }
+      todoList.appendChild(todoItem);
     });
   }
 
   // 個別のタスクアイテムの描画
-  function renderTodoItem(todo, container) {
+  function renderTodoItem(todo) {
     const todoItem = document.createElement('div');
-    todoItem.className = `list-group-item d-flex align-items-center todo-item ${todo.completed ? 'completed' : ''}`;
-    todoItem.dataset.todoId = todo.id;
-    
-    if (!showCompleted && todo.completed) {
-      todoItem.style.display = 'none';
+    todoItem.className = 'list-group-item d-flex align-items-center todo-item';
+    if (todo.completed) {
+      todoItem.classList.add('todo-completed');
     }
+    todoItem.dataset.todoId = todo.id;
 
     // チェックボックスとコンテンツ
     const checkbox = createCheckbox(todo);
@@ -54,7 +64,8 @@ document.addEventListener('DOMContentLoaded', function() {
     todoItem.appendChild(checkbox);
     todoItem.appendChild(content);
     todoItem.appendChild(buttons);
-    container.appendChild(todoItem);
+    
+    return todoItem;
   }
 
   // チェックボックスの作成
@@ -145,12 +156,28 @@ document.addEventListener('DOMContentLoaded', function() {
   // 完了タスクの表示/非表示切り替え
   window.toggleCompletedVisibility = function() {
     showCompleted = !showCompleted;
+    console.log('Toggle visibility:', showCompleted);
+
+    // ボタンのテキストを更新
     const button = document.getElementById('toggle-visibility-btn');
-    button.querySelector('.toggle-text').textContent = 
-      showCompleted ? '完了タスクを非表示' : '完了タスクを表示';
+    if (button) {
+      const toggleText = button.querySelector('.toggle-text');
+      if (toggleText) {
+        toggleText.textContent = showCompleted ? '完了タスクを非表示' : '完了タスクを表示';
+      }
+    }
     
-    document.querySelectorAll('.todo-item.completed').forEach(item => {
-      item.style.display = showCompleted ? '' : 'none';
+    // 完了タスクの表示/非表示を切り替え
+    const completedItems = document.querySelectorAll('.todo-item.todo-completed');
+    console.log('Found completed items:', completedItems.length);
+    
+    completedItems.forEach(item => {
+      console.log('Toggling item:', item.dataset.todoId);
+      if (showCompleted) {
+        item.classList.remove('d-none');
+      } else {
+        item.classList.add('d-none');
+      }
     });
   };
 

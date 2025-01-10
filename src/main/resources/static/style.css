@@ -82,7 +82,11 @@ h1 {
 }
 
 /* 完了タスク */
-.completed {
+.todo-completed {
+  background-color: #f8f9fa;
+}
+
+.todo-completed div.completed {
   text-decoration: line-through;
   color: #bbb;
   opacity: 0.7;
