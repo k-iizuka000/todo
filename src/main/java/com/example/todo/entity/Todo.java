@@ -34,12 +34,7 @@ public class Todo {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Todo> subtasks = new ArrayList<>();
-
-    @ManyToOne
-    @JoinColumn(name = "parent_todo_id")
-    private Todo parent;
+    // Subtask relationships removed as per edit plan
 
     @PrePersist
     protected void onCreate() {
@@ -99,21 +94,5 @@ public class Todo {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public List<Todo> getSubtasks() {
-        return subtasks;
-    }
-
-    public void setSubtasks(List<Todo> subtasks) {
-        this.subtasks = subtasks;
-    }
-
-    public Todo getParent() {
-        return parent;
-    }
-
-    public void setParent(Todo parent) {
-        this.parent = parent;
     }
 }

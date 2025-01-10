@@ -31,33 +31,15 @@ document.addEventListener('DOMContentLoaded', function() {
   // タスクの表示
   function renderTodos(todos) {
     todoList.innerHTML = '';
-    const todoMap = new Map();
-    
-    // 親タスクのみを最初に処理
-    todos.filter(todo => !todo.parentId).forEach(todo => {
-      todoMap.set(todo.id, { ...todo, subtasks: [] });
-    });
-    
-    // サブタスクを親タスクに関連付け
-    todos.filter(todo => todo.parentId).forEach(todo => {
-      const parentTodo = todoMap.get(todo.parentId);
-      if (parentTodo) {
-        parentTodo.subtasks.push(todo);
-      }
-    });
-    
-    // タスクツリーの描画
-    todoMap.forEach(todo => {
-      if (!todo.parentId) {
-        renderTodoItem(todo, todoList);
-      }
+    todos.forEach(todo => {
+      renderTodoItem(todo, todoList);
     });
   }
 
   // 個別のタスクアイテムの描画
-  function renderTodoItem(todo, container, isSubtask = false) {
+  function renderTodoItem(todo, container) {
     const todoItem = document.createElement('div');
-    todoItem.className = `list-group-item d-flex align-items-center todo-item ${todo.completed ? 'completed' : ''} ${isSubtask ? 'subtask' : ''}`;
+    todoItem.className = `list-group-item d-flex align-items-center todo-item ${todo.completed ? 'completed' : ''}`;
     todoItem.dataset.todoId = todo.id;
     
     if (!showCompleted && todo.completed) {
@@ -73,16 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
     todoItem.appendChild(content);
     todoItem.appendChild(buttons);
     container.appendChild(todoItem);
-
-    // サブタスクの描画
-    if (todo.subtasks && todo.subtasks.length > 0) {
-      const subtasksContainer = document.createElement('div');
-      subtasksContainer.className = 'subtasks-container';
-      todo.subtasks.forEach(subtask => {
-        renderTodoItem(subtask, subtasksContainer, true);
-      });
-      container.appendChild(subtasksContainer);
-    }
   }
 
   // チェックボックスの作成
@@ -108,13 +80,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const title = document.createElement('div');
     title.className = todo.completed ? 'completed' : '';
     title.textContent = todo.title;
-    
-    if (todo.subtasks && todo.subtasks.length > 0) {
-      const counter = document.createElement('span');
-      counter.className = 'subtask-counter';
-      counter.textContent = `(子タスク：${todo.subtasks.length}件)`;
-      title.appendChild(counter);
-    }
     
     content.appendChild(title);
     
@@ -144,14 +109,6 @@ document.addEventListener('DOMContentLoaded', function() {
     completeBtn.onclick = () => toggleTodoCompletion(todo.id);
     buttons.appendChild(completeBtn);
     
-    if (!todo.parentId) {
-      const addSubtaskBtn = document.createElement('button');
-      addSubtaskBtn.className = 'btn btn-outline-primary';
-      addSubtaskBtn.textContent = '子タスク追加';
-      addSubtaskBtn.onclick = () => showSubtaskModal(todo);
-      buttons.appendChild(addSubtaskBtn);
-    }
-
     const editBtn = document.createElement('button');
     editBtn.className = 'btn btn-edit';
     editBtn.textContent = '編集';
@@ -204,15 +161,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('edit-title').value = todo.title;
     document.getElementById('edit-description').value = todo.description || '';
     editModal.show();
-  }
-
-  // サブタスクモーダルの表示
-  function showSubtaskModal(parentTodo) {
-    const modal = new bootstrap.Modal(document.getElementById('subtaskModal'));
-    document.getElementById('parent-task-id').value = parentTodo.id;
-    document.getElementById('subtaskModalLabel').textContent = 
-      `「${parentTodo.title}」の子タスクを追加`;
-    modal.show();
   }
 
   // タスクの削除
@@ -272,29 +220,6 @@ document.addEventListener('DOMContentLoaded', function() {
       fetchTodos();
     } catch (error) {
       showError(error.message, 'edit-alert');
-    }
-  });
-
-  // サブタスク追加フォームの処理
-  document.getElementById('subtaskForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const parentId = document.getElementById('parent-task-id').value;
-    const title = document.getElementById('subtask-title').value;
-    const description = document.getElementById('subtask-description').value;
-    
-    try {
-      const response = await fetch(`/api/todos/${parentId}/subtasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description })
-      });
-      
-      if (!response.ok) throw new Error('子タスクの追加に失敗しました');
-      document.getElementById('subtask-title').value = '';
-      document.getElementById('subtask-description').value = '';
-      fetchTodos();
-    } catch (error) {
-      showError(error.message, 'subtask-alert');
     }
   });
 

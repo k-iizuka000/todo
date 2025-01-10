@@ -69,36 +69,9 @@ public class TodoService {
         todoRepository.delete(todo);
     }
 
-    public List<Todo> getSubtasks(Long parentId) {
-        Todo parentTodo = todoRepository.findById(parentId)
-                .orElseThrow(() -> new EntityNotFoundException("Parent Todo not found"));
-        return parentTodo.getSubtasks();
-    }
+    // Removed methods:
+    // - addSubtask
+    // - updateSubtask 
+    // - deleteSubtask
 
-    public Todo addSubtask(Long parentId, Todo subtask) {
-        Todo parentTodo = todoRepository.findById(parentId)
-                .orElseThrow(() -> new EntityNotFoundException("Parent Todo not found"));
-        parentTodo.getSubtasks().add(subtask);
-        return todoRepository.save(parentTodo);
-    }
-
-    public Todo updateSubtask(Long parentId, Long subtaskId, Todo subtask) {
-        Todo parentTodo = todoRepository.findById(parentId)
-                .orElseThrow(() -> new EntityNotFoundException("Parent Todo not found"));
-        Todo existingSubtask = parentTodo.getSubtasks().stream()
-                .filter(t -> t.getId().equals(subtaskId))
-                .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("Subtask not found"));
-        existingSubtask.setTitle(subtask.getTitle());
-        existingSubtask.setDescription(subtask.getDescription());
-        existingSubtask.setCompleted(subtask.isCompleted());
-        return todoRepository.save(parentTodo);
-    }
-
-    public void deleteSubtask(Long parentId, Long subtaskId) {
-        Todo parentTodo = todoRepository.findById(parentId)
-                .orElseThrow(() -> new EntityNotFoundException("Parent Todo not found"));
-        parentTodo.getSubtasks().removeIf(t -> t.getId().equals(subtaskId));
-        todoRepository.save(parentTodo);
-    }
 }
