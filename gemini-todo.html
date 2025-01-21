@@ -27,7 +27,7 @@
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
-        input[type="text"] {
+        input[type="text"], input[type="date"] {
             flex: 1;
             min-width: 200px;
             padding: 8px;
@@ -192,6 +192,21 @@
             max-width: 500px;
             margin: auto;
         }
+        .due-date {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            white-space: nowrap;
+        }
+        .due-date.urgent {
+            background-color: #dc3545;
+            color: white;
+        }
+        .due-date.warning {
+            background-color: #ffc107;
+            color: black;
+        }
 
         /* スマートフォン向けスタイル */
         @media (max-width: 480px) {
@@ -253,6 +268,7 @@
         <h1>Gemini搭載TODOリスト</h1>
         <div class="input-container">
             <input type="text" id="taskInput" placeholder="新しいタスクを入力...">
+            <input type="date" id="dueDateInput">
             <button onclick="addTask()">追加</button>
             <button id="toggleCompletedBtn" onclick="toggleCompletedTasks()">完了タスクを表示/非表示</button>
         </div>
@@ -308,7 +324,8 @@
                 this.completed = false;
                 this.parentId = parentId;
                 this.children = [];
-                this.priority = PRIORITIES.NORMAL.value; // デフォルトは普通
+                this.priority = PRIORITIES.NORMAL.value;
+                this.dueDate = null; // 期限を追加
             }
         }
 
@@ -582,17 +599,18 @@
         // タスクを追加
         window.addTask = function(text, parentId = null) {
             const input = document.getElementById('taskInput');
+            const dueDateInput = document.getElementById('dueDateInput');
             const taskText = text || input.value.trim();
             
             if (taskText) {
                 const newTask = new Task(taskText, parentId);
+                newTask.dueDate = dueDateInput.value || null;
                 
                 if (parentId) {
                     const parentTask = tasks.find(t => t.id === parentId);
                     if (parentTask) {
                         parentTask.children.push(newTask.id);
                         expandedTasks.add(parentId);
-                        // サブタスク追加後にsuggestionsDivを非表示にする
                         const suggestionsDiv = document.getElementById('suggestions');
                         suggestionsDiv.style.display = 'none';
                     }
@@ -601,6 +619,7 @@
                 tasks.push(newTask);
                 renderTasks();
                 input.value = '';
+                dueDateInput.value = '';
 
                 if (!text && !parentId) {
                     generateSubtasks(taskText, newTask.id);
@@ -669,11 +688,13 @@
         window.saveEdit = function(taskId) {
             const task = tasks.find(t => t.id === taskId);
             const editInput = document.getElementById(`edit-input-${taskId}`);
+            const dateInput = document.getElementById(`edit-date-${taskId}`);
             
             if (task && editInput) {
                 const newText = editInput.value.trim();
-                if (newText !== task.text) {
+                if (newText !== task.text || dateInput.value !== task.dueDate) {
                     task.text = newText;
+                    task.dueDate = dateInput.value || null;
                     editingTaskId = null;
                     renderTasks();
                 } else {
@@ -733,6 +754,9 @@
                     <input type="text" id="edit-input-${task.id}" value="${task.text}"
                         onkeypress="if(event.key === 'Enter') saveEdit(${task.id})"
                     >
+                    <input type="date" id="edit-date-${task.id}" value="${task.dueDate || ''}"
+                        onchange="updateDueDate(${task.id}, this.value)"
+                    >
                     <button onclick="showPriorityChangePopup(${task.id}, ${task.priority})">
                         優先度: ${priorityInfo.label}
                     </button>
@@ -748,6 +772,11 @@
                           style="border-left: 3px solid ${priorityInfo.color}; padding-left: 8px;">
                         ${task.text}
                     </span>
+                    ${task.dueDate ? `
+                        <span class="due-date ${getDueDateStatus(task.dueDate)}">
+                            期限: ${formatDate(task.dueDate)}
+                        </span>
+                    ` : ''}
                     ${hasChildren ? `
                         <button class="toggle-btn" onclick="toggleExpand(${task.id})">
                             ${isExpanded ? '▼' : '▶'}
@@ -797,6 +826,32 @@
                 addTask();
             }
         });
+
+        function getDueDateStatus(dueDate) {
+            if (!dueDate) return null;
+            
+            const today = new Date();
+            const due = new Date(dueDate);
+            const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) return 'urgent';
+            if (diffDays <= 3) return 'warning';
+            return 'normal';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ja-JP');
+        }
+
+        window.updateDueDate = function(taskId, newDate) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.dueDate = newDate || null;
+                renderTasks();
+            }
+        };
     </script>
 
 </body>
