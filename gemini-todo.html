@@ -237,6 +237,15 @@
                 padding: 15px;
             }
         }
+        .input-container button#toggleCompletedBtn {
+            background-color: #6c757d;
+        }
+        .input-container button#toggleCompletedBtn:hover {
+            background-color: #5a6268;
+        }
+        .task.hide-completed {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -245,6 +254,7 @@
         <div class="input-container">
             <input type="text" id="taskInput" placeholder="新しいタスクを入力...">
             <button onclick="addTask()">追加</button>
+            <button id="toggleCompletedBtn" onclick="toggleCompletedTasks()">完了タスクを表示/非表示</button>
         </div>
         <div id="suggestions" class="suggestions" style="display: none;"></div>
         <div id="taskList"></div>
@@ -281,6 +291,7 @@
         let taskIdCounter = 1;
         let expandedTasks = new Set();
         let editingTaskId = null;
+        let hideCompleted = false; // 完了タスクの表示/非表示状態を管理
 
         // 優先度の定義を変更
         const PRIORITIES = {
@@ -697,8 +708,18 @@
             return level;
         }
 
+        // 完了タスクの表示/非表示を切り替え
+        window.toggleCompletedTasks = function() {
+            hideCompleted = !hideCompleted;
+            renderTasks();
+        };
+
         // タスクをレンダリング
         function renderTask(task) {
+            if (hideCompleted && task.completed) {
+                return ''; // 完了タスクを非表示にする
+            }
+
             const hasChildren = task.children.length > 0;
             const isExpanded = expandedTasks.has(task.id);
             const childTasks = tasks.filter(t => task.children.includes(t.id));
