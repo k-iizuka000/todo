@@ -1,0 +1,315 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+.todo-container {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+    box-sizing: border-box;
+}
+.input-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+input[type="text"], input[type="date"] {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+button {
+    padding: 8px 16px;
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+button:hover {
+    background-color: #3367d6;
+}
+.task {
+    margin-left: 0;
+    transition: margin-left 0.3s ease;
+}
+.task-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #eee;
+    margin: 5px 0;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    flex-wrap: wrap;
+}
+.task-text {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 200px;
+    flex-wrap: wrap;
+}
+.task-buttons {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+.delete-btn {
+    background-color: #dc3545;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+.edit-btn {
+    background-color: #28a745;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+.delete-btn:hover {
+    background-color: #c82333;
+}
+.edit-btn:hover {
+    background-color: #218838;
+}
+.toggle-btn {
+    background: none;
+    border: none;
+    color: #666;
+    padding: 0 4px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 24px;
+    min-width: 24px;
+}
+.toggle-btn:hover {
+    color: #333;
+}
+.completed {
+    text-decoration: line-through;
+    color: #666;
+}
+.suggestions {
+    margin-top: 10px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+.suggestion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+    padding: 8px;
+    background-color: #fff;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+    flex-wrap: wrap;
+}
+.suggestion button {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+.loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
+    padding: 10px;
+}
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #4285f4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+.edit-mode {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex: 1;
+    flex-wrap: wrap;
+}
+.edit-mode input {
+    flex: 1;
+    min-width: 200px;
+}
+.edit-buttons {
+    display: flex;
+    gap: 5px;
+}
+.level-indicator {
+    font-size: 12px;
+    color: #666;
+    padding: 2px 6px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+.save-btn {
+    background-color: #28a745;
+}
+.cancel-btn {
+    background-color: #6c757d;
+}
+.subtask-btn {
+    background-color: #17a2b8;
+    font-size: 12px;
+}
+.subtask-btn:hover {
+    background-color: #138496;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.priority-modal-content {
+    width: 90%;
+    max-width: 500px;
+    margin: auto;
+}
+.due-date {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    white-space: nowrap;
+}
+.due-date.urgent {
+    background-color: #dc3545;
+    color: white;
+}
+.due-date.warning {
+    background-color: #ffc107;
+    color: black;
+}
+
+/* スマートフォン向けスタイル */
+@media (max-width: 480px) {
+    body {
+        margin: 10px;
+        padding: 0 10px;
+    }
+    .todo-container {
+        padding: 10px;
+    }
+    .task-content {
+        padding: 8px;
+    }
+    .task-text {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .task-buttons {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+    .edit-mode {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .edit-buttons {
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+    .priority-modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+}
+
+/* タブレット向けスタイル */
+@media (min-width: 481px) and (max-width: 768px) {
+    body {
+        margin: 15px;
+    }
+    .todo-container {
+        padding: 15px;
+    }
+}
+.input-container button#toggleCompletedBtn {
+    background-color: #6c757d;
+}
+.input-container button#toggleCompletedBtn:hover {
+    background-color: #5a6268;
+}
+.task.hide-completed {
+    display: none;
+}
+
+/* モーダル用のスタイル */
+.priority-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.priority-modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    min-width: 300px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+.priority-options {
+    margin: 20px 0;
+}
+.priority-option {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.priority-option:hover {
+    background: #f8f9fa;
+}
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.modal-buttons button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.modal-buttons button:first-child {
+    background-color: #28a745;
+    color: white;
+}
+.modal-buttons button:last-child {
+    background-color: #6c757d;
+    color: white;
+}
+.modal-buttons button:hover {
+    opacity: 0.9;
+} 
