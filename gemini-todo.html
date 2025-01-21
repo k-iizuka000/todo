@@ -562,6 +562,9 @@
             if (text) {
                 addTask(text, parentId);
                 input.value = '';
+                // 手動サブタスク追加後にsuggestionsDivを非表示にする
+                const suggestionsDiv = document.getElementById('suggestions');
+                suggestionsDiv.style.display = 'none';
             }
         };
 
@@ -578,6 +581,9 @@
                     if (parentTask) {
                         parentTask.children.push(newTask.id);
                         expandedTasks.add(parentId);
+                        // サブタスク追加後にsuggestionsDivを非表示にする
+                        const suggestionsDiv = document.getElementById('suggestions');
+                        suggestionsDiv.style.display = 'none';
                     }
                 }
                 
