@@ -5,3 +5,5 @@ mvnw
 mvnw.cmd
 target/*
 .env
+memo.md
+node_modules/*
