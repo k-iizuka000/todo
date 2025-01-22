@@ -1,17 +1,3 @@
-// APIキーをサーバーから取得
-async function loadApiKey() {
-    try {
-        const response = await fetch('/api/config');
-        const data = await response.json();
-        return data.apiKey;
-    } catch (error) {
-        console.error('Error loading API key:', error);
-        return '';
-    }
-}
-
-let API_KEY = '';
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 let tasks = [];
 let taskIdCounter = 1;
 let expandedTasks = new Set();
@@ -35,16 +21,13 @@ class Task {
         this.children = [];
         this.priority = PRIORITIES.NORMAL.value;
         this.dueDate = null;
-        this.generationCount = 0; // サブタスク生成回数を追跡
+        this.generationCount = 0;
     }
 }
 
 // 初期化時にAPIキーを設定
 async function initializeApp() {
-    API_KEY = await loadApiKey();
-    if (!API_KEY) {
-        console.error('APIキーが設定されていません');
-    }
+    // APIキーの取得は不要になりました
 }
 
 // Gemini APIを使用してサブタスクを生成
@@ -85,59 +68,24 @@ async function generateSubtasks(taskText, parentTaskId) {
     suggestionsDiv.style.display = 'block';
 
     try {
-        if (!API_KEY) {
-            API_KEY = await loadApiKey();
-        }
-
-        if (!API_KEY) {
-            throw new Error('APIキーが設定されていません');
-        }
-
-        const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+        const response = await fetch('/api/subtasks/generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: `
-'あなたはTODOリストのアシスタントです。
-以下の「親タスク: ${taskText}」を実行するために必要なサブタスクを3つ提案してください。
-サブタスクは実用的で具体的であり、行動を示す動詞を用いて表現してください。
-文章ではなく、箇条書きで出力してください。
-また、卑猥な言葉や犯罪行為を助長するような表現、悪いことを斡旋するような内容は含めないでください。
-同じような意味のサブタスクは出力しないでください。
-
-親タスク: ${taskText}
-
-サブタスクは以下の形式で出力してください（必ず各行を「- 」で始めてください）:
-
-- サブタスク1
-- サブタスク2
-- サブタスク3'
-`
-                    }]
-                }],
-                generationConfig: {
-                    temperature: 0.7,
-                    topK: 40,
-                    topP: 0.95,
-                    maxOutputTokens: 1024,
-                }
-            })
+            body: JSON.stringify({ taskText })
         });
 
         const data = await response.json();
-        if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-            const subtasks = data.candidates[0].content.parts[0].text
-                .split('\n')
-                .filter(line => line.trim().startsWith('-'))
-                .map(line => line.trim().replace(/^- /, ''));
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
 
-            displaySuggestions(subtasks, parentTaskId);
+        if (data.subtasks && data.subtasks.length > 0) {
+            displaySuggestions(data.subtasks, parentTaskId);
         } else {
-            throw new Error('Invalid API response format');
+            throw new Error('サブタスクの生成に失敗しました');
         }
     } catch (error) {
         console.error('Error generating suggestions:', error);

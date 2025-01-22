@@ -1,23 +1,22 @@
+require('dotenv').config();
 const express = require('express');
-const dotenv = require('dotenv');
 const path = require('path');
-
-// .envファイルを読み込む
-dotenv.config();
+const subtaskRoutes = require('./src/routes/subtask-routes');
 
 const app = express();
+const port = process.env.PORT || 3000;
 
-// 静的ファイルの提供
-app.use(express.static(__dirname));
+app.use(express.json());
+app.use(express.static('.'));
 
-// APIキーを提供するエンドポイント
+// APIルート
+app.use('/api/subtasks', subtaskRoutes);
+
+// API Key取得エンドポイント
 app.get('/api/config', (req, res) => {
-    res.json({
-        apiKey: process.env.API_KEY
-    });
+    res.json({ apiKey: process.env.GEMINI_API_KEY });
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 }); 
