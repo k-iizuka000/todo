@@ -35,6 +35,7 @@ class Task {
         this.children = [];
         this.priority = PRIORITIES.NORMAL.value;
         this.dueDate = null;
+        this.generationCount = 0; // サブタスク生成回数を追跡
     }
 }
 
@@ -48,6 +49,32 @@ async function initializeApp() {
 
 // Gemini APIを使用してサブタスクを生成
 async function generateSubtasks(taskText, parentTaskId) {
+    const parentTask = tasks.find(t => t.id === parentTaskId);
+    
+    // サブタスクの数をチェック
+    if (parentTask.children.length >= 4) {
+        const suggestionsDiv = document.getElementById('suggestions');
+        suggestionsDiv.innerHTML = `
+            <div class="error-message" style="color: #dc3545; padding: 10px; background-color: #f8d7da; border-radius: 4px; margin-bottom: 15px;">
+                サブタスクは最大4つまでしか追加できません。
+            </div>
+        `;
+        return;
+    }
+
+    if (parentTask.generationCount >= 3) {
+        const suggestionsDiv = document.getElementById('suggestions');
+        suggestionsDiv.innerHTML = `
+            <div class="error-message" style="color: #dc3545; padding: 10px; background-color: #f8d7da; border-radius: 4px; margin-bottom: 15px;">
+                このタスクに対するサブタスク生成は3回までです。手動でサブタスクを追加してください。
+            </div>
+        `;
+        displayManualSubtaskInput(parentTaskId);
+        return;
+    }
+
+    parentTask.generationCount++; // 生成回数をインクリメント
+    
     const suggestionsDiv = document.getElementById('suggestions');
     suggestionsDiv.innerHTML = `
         <div class="loading">
@@ -80,7 +107,7 @@ async function generateSubtasks(taskText, parentTaskId) {
 サブタスクは実用的で具体的であり、行動を示す動詞を用いて表現してください。
 文章にせず、箇条書きで出力してください。
 また、卑猥な言葉や犯罪行為を助長するような表現、悪いことを斡旋するような内容は含めないでください。
-
+同じような意味のサブタスクは出力しないでください。
 
 タスク: ${taskText}
 
@@ -136,7 +163,19 @@ function displaySuggestions(suggestions, parentTaskId) {
                     </span>
                 </div>
             </div>
-            <h3>AIが提案する関連タスク:</h3>
+            <div style="display: flex; align-items: center; gap: 10px; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <h3 style="margin: 0;">AIが提案する関連タスク:</h3>
+                    ${parentTask.generationCount < 3 ? `
+                        <button onclick="generateSubtasks('${parentTask.text}', ${parentTaskId})" style="padding: 4px 8px; border-radius: 4px;">
+                            <span style="display: inline-block;">🔄</span>
+                        </button>
+                    ` : ''}
+                </div>
+                <span style="color: #6c757d; font-size: 0.9em;">
+                    残り生成回数: ${3 - parentTask.generationCount}回
+                </span>
+            </div>
             ${suggestions.map(suggestion => `
                 <div class="suggestion">
                     <button onclick="addTask('${suggestion}', ${parentTaskId})">追加</button>
@@ -207,6 +246,18 @@ function addTask(text, parentId = null) {
     const taskText = text || input.value.trim();
     
     if (taskText) {
+        // 親タスクが存在する場合、階層レベルをチェック
+        if (parentId) {
+            const parentTask = tasks.find(t => t.id === parentId);
+            if (parentTask) {
+                const level = getTaskLevel(parentTask);
+                if (level >= 3) { // 親が3レベル以上なら、子は4レベル以上になるためブロック
+                    alert('これ以上深い階層のサブタスクは追加できません。');
+                    return;
+                }
+            }
+        }
+
         const newTask = new Task(taskText, parentId);
         newTask.dueDate = dueDateInput.value || null;
         
@@ -253,6 +304,7 @@ function toggleExpand(id) {
 // タスクを削除
 function deleteTask(id) {
     if (confirm('このタスクを削除してもよろしいですか？\nサブタスクも全て削除されます。')) {
+        // 削除対象のタスクとそのすべての子孫タスクのIDを収集
         function getAllChildIds(taskId) {
             const task = tasks.find(t => t.id === taskId);
             if (!task) return [];
@@ -260,16 +312,26 @@ function deleteTask(id) {
             return [taskId, ...childIds];
         }
 
-        const idsToDelete = getAllChildIds(id);
-        tasks = tasks.filter(t => !idsToDelete.includes(t.id));
-        
+        // 削除対象のタスクの親タスクを取得
         const taskToDelete = tasks.find(t => t.id === id);
         if (taskToDelete && taskToDelete.parentId) {
             const parentTask = tasks.find(t => t.id === taskToDelete.parentId);
             if (parentTask) {
+                // 親タスクのchildren配列から、削除対象のタスクIDを削除
                 parentTask.children = parentTask.children.filter(childId => childId !== id);
             }
         }
+
+        // すべての削除対象タスクIDを取得
+        const idsToDelete = getAllChildIds(id);
+        
+        // 削除対象のタスクとその子孫タスクを tasks 配列から削除
+        tasks = tasks.filter(t => !idsToDelete.includes(t.id));
+        
+        // 残っているタスクの children 配列から、削除されたタスクのIDを除去
+        tasks.forEach(task => {
+            task.children = task.children.filter(childId => !idsToDelete.includes(childId));
+        });
         
         renderTasks();
     }
@@ -318,6 +380,28 @@ function cancelEdit() {
 function handleAddSubtask(parentId) {
     const task = tasks.find(t => t.id === parentId);
     if (task) {
+        // 階層レベルをチェック
+        const level = getTaskLevel(task);
+        if (level >= 3) { // 親が3レベル以上なら、子は4レベル以上になるためブロック
+            const suggestionsDiv = document.getElementById('suggestions');
+            suggestionsDiv.innerHTML = `
+                <div class="error-message" style="color: #dc3545; padding: 10px; background-color: #f8d7da; border-radius: 4px; margin-bottom: 15px;">
+                    これ以上深い階層のサブタスクは追加できません。
+                </div>
+            `;
+            return;
+        }
+
+        if (task.generationCount >= 3) {
+            const suggestionsDiv = document.getElementById('suggestions');
+            suggestionsDiv.innerHTML = `
+                <div style="color: #dc3545; margin: 15px 0; font-weight: bold; text-align: center;">
+                    生成しすぎです、手入力してください
+                </div>
+            `;
+            displayManualSubtaskInput(parentId);
+            return;
+        }
         generateSubtasks(task.text, parentId);
     }
 }
@@ -350,6 +434,7 @@ function renderTask(task) {
     const childTasks = tasks.filter(t => task.children.includes(t.id));
     const isEditing = editingTaskId === task.id;
     const currentLevel = getTaskLevel(task);
+    const canAddSubtask = currentLevel < 3; // 現在のレベルが3未満の場合のみサブタスク追加可能
     
     const priorityInfo = Object.values(PRIORITIES).find(p => p.value === task.priority);
     
@@ -394,9 +479,11 @@ function renderTask(task) {
         </div>
         <div class="task-buttons">
             <button class="edit-btn" onclick="startEditing(${task.id})">編集</button>
-            <button class="subtask-btn" onclick="handleAddSubtask(${task.id})">
-                サブタスク追加
-            </button>
+            ${canAddSubtask ? `
+                <button class="subtask-btn" onclick="handleAddSubtask(${task.id})">
+                    サブタスク追加
+                </button>
+            ` : ''}
             <button class="delete-btn" onclick="deleteTask(${task.id})">削除</button>
         </div>
     `;
