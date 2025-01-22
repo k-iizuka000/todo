@@ -1,81 +1,117 @@
 const promptManager = require('../utils/prompt-manager');
-const { fetch } = require('undici');
+const SubTask = require('../models/subtask');
+const { validateSubTask } = require('../validators/subtask-validator');
+const { ApiError } = require('../utils/errors');
+const Task = require('../models/task');
 
-class SubtaskController {
-    async generateSubtasks(req, res) {
-        const { taskText } = req.body;
+class SubTaskController {
+  // Create new subtask
+  async create(req, res) {
+    try {
+      const { taskId } = req.params;
+      const { content } = req.body;
+      const userId = req.user.id;
 
-        // 入力値の検証
-        if (!taskText || taskText.length > 1000) {
-            return res.status(400).json({ 
-                error: '無効な入力です。タスクは1000文字以内で入力してください。' 
-            });
-        }
+      // タスクの所有者確認
+      const task = await Task.findById(taskId, userId);
+      if (!task) {
+        return res.status(404).json({ error: 'タスクが見つかりません' });
+      }
 
-        try {
-            // プロンプトの取得
-            const prompt = await promptManager.getPromptTemplate('subtask-generation', taskText);
-            if (!prompt) {
-                throw new Error('プロンプトの生成に失敗しました');
-            }
+      if (!content) {
+        return res.status(400).json({ error: '内容は必須です' });
+      }
 
-            // Gemini APIの呼び出し
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: prompt }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.7,
-                            topK: 40,
-                            topP: 0.95,
-                            maxOutputTokens: 1024,
-                        }
-                    })
-                }
-            );
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Gemini API error:', errorData);
-                throw new Error('Gemini APIからの応答に失敗しました');
-            }
-
-            const data = await response.json();
-            
-            if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
-                throw new Error('Invalid API response format');
-            }
-
-            const subtasks = data.candidates[0].content.parts[0].text
-                .split('\n')
-                .filter(line => line.trim().startsWith('-'))
-                .map(line => line.trim().replace(/^- /, ''));
-
-            if (subtasks.length === 0) {
-                throw new Error('サブタスクを生成できませんでした');
-            }
-
-            // レスポンスの検証
-            if (!await promptManager.validateResponse('subtask-generation', data.candidates[0].content.parts[0].text)) {
-                throw new Error('生成されたサブタスクが無効です');
-            }
-
-            res.json({ subtasks });
-        } catch (error) {
-            console.error('Error generating subtasks:', error);
-            res.status(500).json({ 
-                error: 'サブタスクの生成に失敗しました。しばらく待ってから再度お試しください。',
-                details: error.message
-            });
-        }
+      const subtask = await SubTask.create({ taskId, content });
+      res.status(201).json(subtask);
+    } catch (error) {
+      console.error('サブタスク作成エラー:', error);
+      res.status(500).json({ error: 'サブタスクの作成に失敗しました' });
     }
+  }
+
+  // Get subtask by ID
+  async getSubTask(req, res, next) {
+    try {
+      const subtask = await SubTask.findById(req.params.id);
+      if (!subtask) {
+        throw new ApiError(404, 'Subtask not found');
+      }
+      res.json(subtask);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Update subtask
+  async update(req, res) {
+    try {
+      const { id } = req.params;
+      const { content, isCompleted } = req.body;
+
+      const subtask = await SubTask.update(id, { content, isCompleted });
+      if (!subtask) {
+        return res.status(404).json({ error: 'サブタスクが見つかりません' });
+      }
+
+      res.json(subtask);
+    } catch (error) {
+      console.error('サブタスク更新エラー:', error);
+      res.status(500).json({ error: 'サブタスクの更新に失敗しました' });
+    }
+  }
+
+  // Delete subtask
+  async delete(req, res) {
+    try {
+      const { id } = req.params;
+
+      const subtask = await SubTask.delete(id);
+      if (!subtask) {
+        return res.status(404).json({ error: 'サブタスクが見つかりません' });
+      }
+
+      res.json({ message: 'サブタスクを削除しました' });
+    } catch (error) {
+      console.error('サブタスク削除エラー:', error);
+      res.status(500).json({ error: 'サブタスクの削除に失敗しました' });
+    }
+  }
+
+  async toggleComplete(req, res) {
+    try {
+      const { id } = req.params;
+
+      const subtask = await SubTask.toggleComplete(id);
+      if (!subtask) {
+        return res.status(404).json({ error: 'サブタスクが見つかりません' });
+      }
+
+      res.json(subtask);
+    } catch (error) {
+      console.error('サブタスク更新エラー:', error);
+      res.status(500).json({ error: 'サブタスクの更新に失敗しました' });
+    }
+  }
+
+  async getByTaskId(req, res) {
+    try {
+      const { taskId } = req.params;
+      const userId = req.user.id;
+
+      // タスクの所有者確認
+      const task = await Task.findById(taskId, userId);
+      if (!task) {
+        return res.status(404).json({ error: 'タスクが見つかりません' });
+      }
+
+      const subtasks = await SubTask.findByTaskId(taskId);
+      res.json(subtasks);
+    } catch (error) {
+      console.error('サブタスク取得エラー:', error);
+      res.status(500).json({ error: 'サブタスクの取得に失敗しました' });
+    }
+  }
 }
 
-module.exports = new SubtaskController(); 
+module.exports = new SubTaskController(); 
