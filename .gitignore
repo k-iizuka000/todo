@@ -7,3 +7,4 @@ target/*
 .env
 memo.md
 node_modules/*
+.env*

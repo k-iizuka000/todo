@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1737520830478" clover="3.2.0">
-  <project timestamp="1737520830478" name="All files">
+<coverage generated="1737524749904" clover="3.2.0">
+  <project timestamp="1737524749905" name="All files">
     <metrics statements="43" coveredstatements="42" conditionals="0" coveredconditionals="0" methods="11" coveredmethods="10" elements="54" coveredelements="52" complexity="0" loc="43" ncloc="43" packages="1" files="3" classes="3"/>
     <file name="db.js" path="/Users/kei/work/todo/src/models/db.js">
       <metrics statements="5" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="0"/>
