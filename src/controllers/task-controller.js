@@ -1,92 +1,112 @@
 const Task = require('../models/task');
-const { validateTask } = require('../validators/task-validator');
-const ApiError = require('../utils/api-error');
+const { ApiError } = require('../utils/api-error');
 
-class TaskController {
+const taskController = {
   // Create new task
-  async create(req, res) {
+  async createTask(req, res, next) {
     try {
-      const { title, description } = req.body;
-      const userId = req.user.id; // 認証ミドルウェアから取得
+      const taskData = {
+        ...req.body,
+        userId: req.user.id
+      };
 
-      if (!title) {
-        return res.status(400).json({ error: 'タイトルは必須です' });
-      }
-
-      const task = await Task.create({ title, description, userId });
-      res.status(201).json(task);
-    } catch (error) {
-      console.error('タスク作成エラー:', error);
-      res.status(500).json({ error: 'タスクの作成に失敗しました' });
-    }
-  }
-
-  // Get all tasks for user
-  async getAll(req, res) {
-    try {
-      const userId = req.user.id;
-      const tasks = await Task.findAll(userId);
-      res.json(tasks);
-    } catch (error) {
-      console.error('タスク一覧取得エラー:', error);
-      res.status(500).json({ error: 'タスクの取得に失敗しました' });
-    }
-  }
-
-  // Get single task
-  async getById(req, res) {
-    try {
-      const { id } = req.params;
-      const userId = req.user.id;
+      const task = await Task.create(taskData);
       
-      const task = await Task.findById(id, userId);
+      res.status(201).json({
+        status: 'success',
+        data: {
+          ...task,
+          ...taskData
+        }
+      });
+    } catch (error) {
+      next(new ApiError(500, error.message));
+    }
+  },
+
+  // Get all tasks for a user
+  async getTasks(req, res, next) {
+    try {
+      const tasks = await Task.findAll(req.user.id);
+      
+      res.status(200).json({
+        status: 'success',
+        data: tasks
+      });
+    } catch (error) {
+      next(new ApiError(500, error.message));
+    }
+  },
+
+  // Get task by ID
+  async getTaskById(req, res, next) {
+    try {
+      const task = await Task.findById(req.params.id);
+      
       if (!task) {
-        return res.status(404).json({ error: 'タスクが見つかりません' });
+        return next(new ApiError(404, 'タスクが見つかりません'));
+      }
+
+      if (task.userId !== req.user.id) {
+        return next(new ApiError(403, 'このタスクにアクセスする権限がありません'));
       }
       
-      res.json(task);
+      res.status(200).json({
+        status: 'success',
+        data: task
+      });
     } catch (error) {
-      console.error('タスク取得エラー:', error);
-      res.status(500).json({ error: 'タスクの取得に失敗しました' });
+      next(new ApiError(500, error.message));
     }
-  }
+  },
 
   // Update task
-  async update(req, res) {
+  async updateTask(req, res, next) {
     try {
-      const { id } = req.params;
-      const { title, description, status } = req.body;
-      const userId = req.user.id;
-
-      const task = await Task.update(id, { title, description, status }, userId);
+      const task = await Task.findById(req.params.id);
+      
       if (!task) {
-        return res.status(404).json({ error: 'タスクが見つかりません' });
+        return next(new ApiError(404, 'タスクが見つかりません'));
       }
 
-      res.json(task);
+      if (task.userId !== req.user.id) {
+        return next(new ApiError(403, 'このタスクにアクセスする権限がありません'));
+      }
+
+      const updatedTask = await Task.update(req.params.id, req.body);
+      
+      res.status(200).json({
+        status: 'success',
+        data: updatedTask
+      });
     } catch (error) {
-      console.error('タスク更新エラー:', error);
-      res.status(500).json({ error: 'タスクの更新に失敗しました' });
+      next(new ApiError(500, error.message));
     }
-  }
+  },
 
   // Delete task
-  async delete(req, res) {
+  async deleteTask(req, res, next) {
     try {
-      const { id } = req.params;
-      const userId = req.user.id;
-
-      const task = await Task.delete(id, userId);
+      const task = await Task.findById(req.params.id);
+      
       if (!task) {
-        return res.status(404).json({ error: 'タスクが見つかりません' });
+        return next(new ApiError(404, 'タスクが見つかりません'));
       }
 
-      res.json({ message: 'タスクを削除しました' });
+      if (task.userId !== req.user.id) {
+        return next(new ApiError(403, 'このタスクにアクセスする権限がありません'));
+      }
+
+      await Task.delete(req.params.id);
+      
+      res.status(200).json({
+        status: 'success',
+        message: 'Task deleted successfully'
+      });
     } catch (error) {
-      console.error('タスク削除エラー:', error);
-      res.status(500).json({ error: 'タスクの削除に失敗しました' });
+      next(new ApiError(500, error.message));
     }
   }
-}
+};
 
-module.exports = new TaskController();
+module.exports = taskController;

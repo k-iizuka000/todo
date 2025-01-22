@@ -73,7 +73,10 @@ async function generateSubtasks(taskText, parentTaskId) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ taskText })
+            body: JSON.stringify({ 
+                title: taskText,
+                description: '' 
+            })
         });
 
         const data = await response.json();

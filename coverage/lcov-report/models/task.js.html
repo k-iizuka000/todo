@@ -3,15 +3,15 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for subtask.js</title>
+    <title>Code coverage report for models/task.js</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="prettify.css" />
-    <link rel="stylesheet" href="base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(sort-arrow-sprite.png);
+            background-image: url(../sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -19,7 +19,7 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="index.html">All files</a> subtask.js</h1>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">models</a> task.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
@@ -125,7 +125,13 @@
 <a name='L60'></a><a href='#L60'>60</a>
 <a name='L61'></a><a href='#L61'>61</a>
 <a name='L62'></a><a href='#L62'>62</a>
-<a name='L63'></a><a href='#L63'>63</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -146,26 +152,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -182,90 +168,122 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">const db = require('./db');
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span></td><td class="text"><pre class="prettyprint lang-js">const db = require('./db');
 &nbsp;
-class Subtask {
-  static async create({ taskId, content }) {
+class Task {
+  static async create({ title, description, userId }) {
     const query = `
-      INSERT INTO subtasks (task_id, content)
-      VALUES ($1, $2)
+      INSERT INTO tasks (title, description, user_id)
+      VALUES ($1, $2, $3)
       RETURNING *
     `;
-    const values = [taskId, content];
+    const values = [title, description, userId];
     const result = await db.query(query, values);
     return result.rows[0];
   }
 &nbsp;
-  static async findByTaskId(taskId) {
+  static async findAll(userId) {
     const query = `
-      SELECT *
-      FROM subtasks
-      WHERE task_id = $1
-      ORDER BY created_at ASC
+      SELECT t.*, 
+             COUNT(s.id) as subtask_count,
+             COUNT(CASE WHEN s.is_completed THEN 1 END) as completed_subtask_count
+      FROM tasks t
+      LEFT JOIN subtasks s ON t.id = s.task_id
+      WHERE t.user_id = $1
+      GROUP BY t.id
+      ORDER BY t.created_at DESC
     `;
-    const result = await db.query(query, [taskId]);
+    const result = await db.query(query, [userId]);
     return result.rows;
   }
 &nbsp;
-  static async update(id, { content, isCompleted }) {
+  static async findById(id, userId) {
     const query = `
-      UPDATE subtasks
-      SET content = COALESCE($1, content),
-          is_completed = COALESCE($2, is_completed),
+      SELECT t.*, 
+             json_agg(s.*) as subtasks
+      FROM tasks t
+      LEFT JOIN subtasks s ON t.id = s.task_id
+      WHERE t.id = $1 AND t.user_id = $2
+      GROUP BY t.id
+    `;
+    const result = await db.query(query, [id, userId]);
+    return result.rows[0];
+  }
+&nbsp;
+  static async update(id, { title, description, status }, userId) {
+    const query = `
+      UPDATE tasks
+      SET title = COALESCE($1, title),
+          description = COALESCE($2, description),
+          status = COALESCE($3, status),
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $3
+      WHERE id = $4 AND user_id = $5
       RETURNING *
     `;
-    const values = [content, isCompleted, id];
+    const values = [title, description, status, id, userId];
     const result = await db.query(query, values);
     return result.rows[0];
   }
 &nbsp;
-  static async delete(id) {
+  static async delete(id, userId) {
     const query = `
-      DELETE FROM subtasks
-      WHERE id = $1
+      DELETE FROM tasks
+      WHERE id = $1 AND user_id = $2
       RETURNING *
     `;
-    const result = await db.query(query, [id]);
-    return result.rows[0];
-  }
-&nbsp;
-  static async toggleComplete(id) {
-    const query = `
-      UPDATE subtasks
-      SET is_completed = NOT is_completed,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1
-      RETURNING *
-    `;
-    const result = await db.query(query, [id]);
+    const result = await db.query(query, [id, userId]);
     return result.rows[0];
   }
 }
 &nbsp;
-module.exports = Subtask; </pre></td></tr></table></pre>
+module.exports = Task; </pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-01-22T05:51:14.656Z
+                at 2025-01-22T10:06:27.448Z
             </div>
-        <script src="prettify.js"></script>
+        <script src="../prettify.js"></script>
         <script>
             window.onload = function () {
                 prettyPrint();
             };
         </script>
-        <script src="sorter.js"></script>
-        <script src="block-navigation.js"></script>
+        <script src="../sorter.js"></script>
+        <script src="../block-navigation.js"></script>
     </body>
 </html>
     

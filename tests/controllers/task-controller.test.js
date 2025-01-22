@@ -1,12 +1,12 @@
 const { supabase } = require('../../src/middleware/auth');
 const taskController = require('../../src/controllers/task-controller');
-const Task = require('../../models/task');
-const mongoose = require('mongoose');
+const Task = require('../../src/models/task');
+const { ApiError } = require('../../src/utils/api-error');
 
 // Mock Task model
-jest.mock('../../models/task');
+jest.mock('../../src/models/task');
 
-// モックの設定
+// Mock auth middleware
 jest.mock('../../src/middleware/auth', () => ({
   supabase: {
     from: jest.fn()
@@ -17,21 +17,20 @@ describe('TaskController', () => {
   let mockReq;
   let mockRes;
   let mockNext;
-  
+
   beforeEach(() => {
     mockReq = {
       body: {},
       params: {},
-      user: { id: 'test-user-id' }
+      user: { id: 1 }
     };
     mockRes = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn()
     };
     mockNext = jest.fn();
-  });
 
-  afterEach(() => {
+    // Reset all mocks
     jest.clearAllMocks();
   });
 
@@ -43,14 +42,7 @@ describe('TaskController', () => {
       };
       mockReq.body = mockTask;
 
-      supabase.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockResolvedValue({
-            data: [{ ...mockTask, id: 1 }],
-            error: null
-          })
-        })
-      });
+      Task.create.mockResolvedValue({ ...mockTask, id: 1 });
 
       await taskController.createTask(mockReq, mockRes, mockNext);
 
@@ -69,14 +61,7 @@ describe('TaskController', () => {
         { id: 2, title: 'Task 2' }
       ];
 
-      supabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            data: mockTasks,
-            error: null
-          })
-        })
-      });
+      Task.findAll.mockResolvedValue(mockTasks);
 
       await taskController.getTasks(mockReq, mockRes, mockNext);
 
@@ -88,55 +73,53 @@ describe('TaskController', () => {
     });
 
     it('should handle errors', async () => {
-      const mockError = new Error('Database error');
-
-      supabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            data: null,
-            error: mockError
-          })
-        })
-      });
+      const error = new Error('Database error');
+      Task.findAll.mockRejectedValue(error);
 
       await taskController.getTasks(mockReq, mockRes, mockNext);
 
-      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+      expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
+        message: 'Database error',
+        statusCode: 500
+      }));
     });
   });
 
   describe('updateTask', () => {
     it('should update task successfully', async () => {
-      const taskId = 'test-task-id';
+      const taskId = 1;
       const updateData = { title: 'Updated Title' };
-      
       mockReq.params.id = taskId;
       mockReq.body = updateData;
-      
-      Task.findByIdAndUpdate.mockResolvedValue(updateData);
-      
-      await taskController.updateTask(mockReq, mockRes);
-      
-      expect(Task.findByIdAndUpdate).toHaveBeenCalledWith(
-        taskId,
-        updateData,
-        { new: true }
-      );
-      expect(mockRes.json).toHaveBeenCalledWith(updateData);
+
+      Task.findById.mockResolvedValue({ id: taskId, userId: mockReq.user.id });
+      Task.update.mockResolvedValue({ ...updateData, id: taskId });
+
+      await taskController.updateTask(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        status: 'success',
+        data: expect.objectContaining(updateData)
+      });
     });
   });
 
   describe('deleteTask', () => {
     it('should delete task successfully', async () => {
-      const taskId = 'test-task-id';
+      const taskId = 1;
       mockReq.params.id = taskId;
-      
-      Task.findByIdAndDelete.mockResolvedValue({ _id: taskId });
-      
-      await taskController.deleteTask(mockReq, mockRes);
-      
-      expect(Task.findByIdAndDelete).toHaveBeenCalledWith(taskId);
+
+      Task.findById.mockResolvedValue({ id: taskId, userId: mockReq.user.id });
+      Task.delete.mockResolvedValue({ id: taskId });
+
+      await taskController.deleteTask(mockReq, mockRes, mockNext);
+
       expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        status: 'success',
+        message: 'Task deleted successfully'
+      });
     });
   });
 });

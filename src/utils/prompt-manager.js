@@ -1,8 +1,10 @@
 const path = require('path');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 class PromptManager {
     constructor() {
         this.prompts = {};
+        this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     }
 
     async loadPrompt(name) {
@@ -40,6 +42,31 @@ class PromptManager {
         } catch (error) {
             console.error('Error validating response:', error);
             return false;
+        }
+    }
+
+    async generateSubtasks(title, description = '') {
+        try {
+            const prompt = await this.loadPrompt('subtask-generation');
+            const template = await this.getPromptTemplate('subtask-generation', title);
+
+            const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+            const result = await model.generateContent(template);
+            const response = result.response.text();
+
+            if (!prompt.validate(response)) {
+                throw new Error('生成されたサブタスクが無効です');
+            }
+
+            // 応答から箇条書きの行を抽出
+            const subtasks = response.split('\n')
+                .filter(line => line.trim().startsWith('-'))
+                .map(line => line.trim().substring(2).trim());
+
+            return subtasks;
+        } catch (error) {
+            console.error('Error generating subtasks:', error);
+            throw new Error('サブタスク生成中にエラーが発生しました: ' + error.message);
         }
     }
 }

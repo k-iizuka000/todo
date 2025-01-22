@@ -14,10 +14,11 @@ router.delete('/:id', auth, taskController.deleteTask);
 // Error handling for task routes
 router.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(err.status || 500).json({
+  const status = err.statusCode || err.status || 500;
+  res.status(status).json({
+    status: 'error',
     error: {
-      message: err.message || 'Internal server error',
-      status: err.status || 500
+      message: err.message || 'Internal server error'
     }
   });
 });

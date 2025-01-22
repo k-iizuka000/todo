@@ -74,13 +74,18 @@ export const subtasks = {
     return data;
   },
 
-  update: async (id, subtaskData) => {
-    const { data } = await api.put(`/subtasks/${id}`, subtaskData);
+  update: async (taskId, id, subtaskData) => {
+    const { data } = await api.put(`/tasks/${taskId}/subtasks/${id}`, subtaskData);
     return data;
   },
 
-  delete: async (id) => {
-    await api.delete(`/subtasks/${id}`);
+  delete: async (taskId, id) => {
+    await api.delete(`/tasks/${taskId}/subtasks/${id}`);
+  },
+
+  toggleComplete: async (taskId, id) => {
+    const { data } = await api.patch(`/tasks/${taskId}/subtasks/${id}/toggle`);
+    return data;
   }
 };
 

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { errorHandler } = require('./src/middleware/error-handler');
 const taskRoutes = require('./src/routes/task-routes');
 const subtaskRoutes = require('./src/routes/subtask-routes');
@@ -14,9 +15,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// 静的ファイルの提供
+app.use(express.static(path.join(__dirname)));
+
 // API routes
 app.use('/api/tasks', taskRoutes);
-app.use('/api', subtaskRoutes);
+app.use('/api/subtasks', subtaskRoutes);
 app.use('/api/users', userRoutes);
 
 // API Key取得エンドポイント
