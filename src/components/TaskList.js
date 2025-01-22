@@ -34,7 +34,11 @@ const TaskList = () => {
   const fetchTasks = async () => {
     try {
       const response = await tasks.getAll();
-      setTaskList(response.data);
+      if (response.status === 'success' && Array.isArray(response.data)) {
+        setTaskList(response.data);
+      } else {
+        console.error('Invalid response format:', response);
+      }
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
     }
@@ -42,9 +46,13 @@ const TaskList = () => {
 
   const handleCreateTask = async (taskData) => {
     try {
-      await tasks.create(taskData);
-      fetchTasks();
-      setIsCreating(false);
+      const response = await tasks.create(taskData);
+      if (response.status === 'success') {
+        await fetchTasks();
+        setIsCreating(false);
+      } else {
+        console.error('Failed to create task:', response);
+      }
     } catch (error) {
       console.error('Failed to create task:', error);
     }
@@ -52,9 +60,13 @@ const TaskList = () => {
 
   const handleUpdateTask = async (taskData) => {
     try {
-      await tasks.update(editingTask.id, taskData);
-      fetchTasks();
-      setEditingTask(null);
+      const response = await tasks.update(editingTask.id, taskData);
+      if (response.status === 'success') {
+        await fetchTasks();
+        setEditingTask(null);
+      } else {
+        console.error('Failed to update task:', response);
+      }
     } catch (error) {
       console.error('Failed to update task:', error);
     }
@@ -62,8 +74,8 @@ const TaskList = () => {
 
   const handleDeleteTask = async (taskId) => {
     try {
-      await tasks.delete(taskId);
-      fetchTasks();
+      const response = await tasks.delete(taskId);
+      await fetchTasks();
     } catch (error) {
       console.error('Failed to delete task:', error);
     }

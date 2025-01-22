@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
@@ -13,6 +15,7 @@ exports.up = (pgm) => {
   pgm.createTable('users', {
     id: 'id',
     email: { type: 'varchar(255)', notNull: true, unique: true },
+    password: { type: 'varchar(255)', notNull: true },
     google_id: { type: 'varchar(255)', unique: true },
     name: { type: 'varchar(255)' },
     avatar_url: { type: 'text' },

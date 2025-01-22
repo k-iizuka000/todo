@@ -1,31 +1,23 @@
-const { createClient } = require('@supabase/supabase-js');
-const { Pool } = require('pg');
+import pkg from 'pg';
+const { Pool } = pkg;
+import dotenv from 'dotenv';
 
-// 環境変数の設定
-const isDevelopment = process.env.NODE_ENV === 'development';
+dotenv.config();
 
-// 開発環境用のPostgreSQL接続設定
-const devPool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'todo_db',
-  password: 'postgres',
-  port: 5432,
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
 });
 
-// Supabase接続設定
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
-
-// 環境に応じたデータベースクライアントを返す
-const getDbClient = () => {
-  return isDevelopment ? devPool : supabase;
+const connectDB = async () => {
+  try {
+    const client = await pool.connect();
+    console.log('PostgreSQL Connected');
+    client.release();
+    return pool;
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    process.exit(1);
+  }
 };
 
-module.exports = {
-  getDbClient,
-  devPool,
-  supabase,
-}; 
+export default connectDB;

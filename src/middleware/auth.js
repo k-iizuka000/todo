@@ -1,38 +1,84 @@
-const { createClient } = require('@supabase/supabase-js');
-const { AppError } = require('./error-handler');
+import jwt from 'jsonwebtoken';
+import { StatusCodes } from 'http-status-codes';
+import User from '../models/user.js';
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+export const protect = async (req, res, next) => {
+  let token;
 
-// Authentication middleware
-const auth = async (req, res, next) => {
-  try {
-    // Get JWT token from Authorization header
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      throw new AppError(401, '認証が必要です');
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    try {
+      // トークンの取得
+      token = req.headers.authorization.split(' ')[1];
+
+      // トークンの検証
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      // ユーザー情報の取得（パスワードを除く）
+      req.user = await User.findById(decoded.id).select('-password');
+
+      next();
+    } catch (error) {
+      res.status(StatusCodes.UNAUTHORIZED).json({
+        success: false,
+        message: '認証に失敗しました'
+      });
     }
+  }
 
-    // Verify token with Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-
-    if (error || !user) {
-      throw new AppError(401, '無効なトークンです');
-    }
-
-    // Attach user to request object
-    req.user = user;
-    next();
-  } catch (error) {
-    next(error);
+  if (!token) {
+    res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      message: '認証トークンが見つかりません'
+    });
   }
 };
 
-module.exports = {
-  auth,
-  supabase
-};
+export const authMiddleware = async (req, res, next) => {
+  try {
+    // Authorization headerからトークンを取得
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: '認証トークンが必要です' })
+    }
+
+    const token = authHeader.split(' ')[1]
+
+    // トークンの検証
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+
+    if (error || !user) {
+      return res.status(401).json({ error: '無効な認証トークンです' })
+    }
+
+    // ユーザー情報をリクエストに追加
+    req.user = user
+    next()
+  } catch (error) {
+    console.error('認証エラー:', error)
+    res.status(500).json({ error: '認証処理中にエラーが発生しました' })
+  }
+}
+
+export const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      next()
+      return
+    }
+
+    const token = authHeader.split(' ')[1]
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+
+    if (!error && user) {
+      req.user = user
+    }
+    next()
+  } catch (error) {
+    console.error('認証エラー:', error)
+    next()
+  }
+}

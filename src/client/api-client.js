@@ -1,10 +1,4 @@
 import axios from 'axios';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 const api = axios.create({
   baseURL: '/api',
@@ -12,28 +6,6 @@ const api = axios.create({
     'Content-Type': 'application/json'
   }
 });
-
-// 認証関連
-export const auth = {
-  signIn: async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google'
-    });
-    if (error) throw error;
-    return data;
-  },
-
-  signOut: async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  },
-
-  getUser: async () => {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    return user;
-  }
-};
 
 // タスク関連
 export const tasks = {
@@ -88,12 +60,3 @@ export const subtasks = {
     return data;
   }
 };
-
-// インターセプターの設定
-api.interceptors.request.use(async (config) => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.access_token) {
-    config.headers.Authorization = `Bearer ${session.access_token}`;
-  }
-  return config;
-});

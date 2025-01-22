@@ -14,12 +14,10 @@ const taskController = {
       
       res.status(201).json({
         status: 'success',
-        data: {
-          ...task,
-          ...taskData
-        }
+        data: task
       });
     } catch (error) {
+      console.error('Create task error:', error);
       next(new ApiError(500, error.message));
     }
   },
@@ -34,6 +32,7 @@ const taskController = {
         data: tasks
       });
     } catch (error) {
+      console.error('Get tasks error:', error);
       next(new ApiError(500, error.message));
     }
   },
@@ -41,14 +40,10 @@ const taskController = {
   // Get task by ID
   async getTaskById(req, res, next) {
     try {
-      const task = await Task.findById(req.params.id);
+      const task = await Task.findById(req.params.id, req.user.id);
       
       if (!task) {
         return next(new ApiError(404, 'タスクが見つかりません'));
-      }
-
-      if (task.userId !== req.user.id) {
-        return next(new ApiError(403, 'このタスクにアクセスする権限がありません'));
       }
       
       res.status(200).json({
@@ -56,6 +51,7 @@ const taskController = {
         data: task
       });
     } catch (error) {
+      console.error('Get task by ID error:', error);
       next(new ApiError(500, error.message));
     }
   },
@@ -63,23 +59,20 @@ const taskController = {
   // Update task
   async updateTask(req, res, next) {
     try {
-      const task = await Task.findById(req.params.id);
+      const task = await Task.findById(req.params.id, req.user.id);
       
       if (!task) {
         return next(new ApiError(404, 'タスクが見つかりません'));
       }
 
-      if (task.userId !== req.user.id) {
-        return next(new ApiError(403, 'このタスクにアクセスする権限がありません'));
-      }
-
-      const updatedTask = await Task.update(req.params.id, req.body);
+      const updatedTask = await Task.update(req.params.id, req.body, req.user.id);
       
       res.status(200).json({
         status: 'success',
         data: updatedTask
       });
     } catch (error) {
+      console.error('Update task error:', error);
       next(new ApiError(500, error.message));
     }
   },
@@ -87,23 +80,20 @@ const taskController = {
   // Delete task
   async deleteTask(req, res, next) {
     try {
-      const task = await Task.findById(req.params.id);
+      const task = await Task.findById(req.params.id, req.user.id);
       
       if (!task) {
         return next(new ApiError(404, 'タスクが見つかりません'));
       }
 
-      if (task.userId !== req.user.id) {
-        return next(new ApiError(403, 'このタスクにアクセスする権限がありません'));
-      }
-
-      await Task.delete(req.params.id);
+      await Task.delete(req.params.id, req.user.id);
       
       res.status(200).json({
         status: 'success',
-        message: 'Task deleted successfully'
+        data: null
       });
     } catch (error) {
+      console.error('Delete task error:', error);
       next(new ApiError(500, error.message));
     }
   }

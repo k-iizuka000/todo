@@ -8,3 +8,4 @@ target/*
 memo.md
 node_modules/*
 .env*
+docs/*
