@@ -276,6 +276,14 @@ function addTask(text, parentId = null) {
         input.value = '';
         dueDateInput.value = '';
 
+        // 新しく追加されたタスクまでスクロール
+        setTimeout(() => {
+            const taskElement = document.getElementById(`task-${newTask.id}`);
+            if (taskElement) {
+                taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 100);
+
         if (!text && !parentId) {
             generateSubtasks(taskText, newTask.id);
         }
@@ -380,6 +388,9 @@ function cancelEdit() {
 function handleAddSubtask(parentId) {
     const task = tasks.find(t => t.id === parentId);
     if (task) {
+        // 画面トップにスクロール
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
         // 階層レベルをチェック
         const level = getTaskLevel(task);
         if (level >= 3) { // 親が3レベル以上なら、子は4レベル以上になるためブロック
@@ -455,7 +466,7 @@ function renderTask(task) {
             </div>
         </div>
     ` : `
-        <div class="task-text">
+        <div class="task-text" id="task-${task.id}">
             <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
             <span class="${task.completed ? 'completed' : ''}" 
                   style="border-left: 3px solid ${priorityInfo.color}; padding-left: 8px;">
