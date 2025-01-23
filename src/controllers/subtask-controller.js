@@ -1,27 +1,38 @@
-const promptManager = require('../utils/prompt-manager');
-const SubTask = require('../models/subtask');
-const { validateSubTask } = require('../validators/subtask-validator');
-const { ApiError } = require('../utils/errors');
-const Task = require('../models/task');
+import { StatusCodes } from 'http-status-codes';
+import SubTask from '../models/subtask.js';
+import { validateSubTask } from '../validators/subtask-validator.js';
+import { ApiError } from '../utils/errors.js';
+import Task from '../models/task.js';
+import { PromptManager } from '../utils/prompt-manager.js';
+
+const promptManager = new PromptManager();
 
 class SubTaskController {
   // サブタスク生成
   async generateSubtasks(req, res, next) {
     try {
-      const { title, description } = req.body;
-      if (!title) {
-        return next(new ApiError(400, 'タイトルは必須です'));
+      const { taskTitle, taskDescription } = req.body;
+
+      if (!taskTitle) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          success: false,
+          message: 'タスクのタイトルは必須です'
+        });
       }
 
-      const suggestions = await promptManager.generateSubtasks(title, description);
-      
-      res.status(200).json({
-        status: 'success',
-        subtasks: suggestions
+      const subtasks = await promptManager.generateSubtasks(taskTitle, taskDescription);
+
+      return res.status(StatusCodes.OK).json({
+        success: true,
+        subtasks: subtasks
       });
+
     } catch (error) {
-      console.error('Error in generateSubtasks:', error);
-      next(new ApiError(500, 'サブタスクの生成に失敗しました: ' + error.message));
+      console.error('サブタスク生成エラー:', error);
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'サブタスクの生成に失敗しました'
+      });
     }
   }
 
@@ -70,8 +81,7 @@ class SubTaskController {
 
       const subtask = await SubTask.create({
         ...req.body,
-        taskId,
-        userId: req.user.id
+        taskId: taskId
       });
 
       res.status(201).json({
@@ -188,4 +198,4 @@ class SubTaskController {
   }
 }
 
-module.exports = new SubTaskController(); 
+export default new SubTaskController(); 

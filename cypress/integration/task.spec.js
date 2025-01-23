@@ -1,7 +1,7 @@
 describe('Task Management', () => {
   beforeEach(() => {
     // Setup and login before each test
-    cy.visit('/');
+    cy.visit('/gemini-todo.html');
     cy.login(); // Custom command for authentication
   });
 

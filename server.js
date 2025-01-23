@@ -5,6 +5,7 @@ import { dirname, join } from 'path'
 import cors from 'cors'
 import connectDB from './src/utils/db.js'
 import userRoutes from './src/routes/user-routes.js'
+import subtaskRoutes from './src/routes/subtask-routes.js'
 
 // 環境変数の読み込み
 dotenv.config()
@@ -39,6 +40,7 @@ connectDB().then(() => {
 
 // ルートの登録
 app.use('/api', userRoutes)
+app.use('/api/subtasks', subtaskRoutes)
 
 // Global error handler
 app.use((err, req, res, next) => {

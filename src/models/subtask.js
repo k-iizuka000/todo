@@ -1,4 +1,4 @@
-const db = require('./db');
+import db from './db.js';
 
 class Subtask {
   static async create({ taskId, content }) {
@@ -60,4 +60,4 @@ class Subtask {
   }
 }
 
-module.exports = Subtask; 
+export default Subtask; 

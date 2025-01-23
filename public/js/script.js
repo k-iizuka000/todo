@@ -74,8 +74,8 @@ async function generateSubtasks(taskText, parentTaskId) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
-                title: taskText,
-                description: '' 
+                taskTitle: taskText,
+                taskDescription: '' 
             })
         });
 
@@ -92,6 +92,12 @@ async function generateSubtasks(taskText, parentTaskId) {
         }
     } catch (error) {
         console.error('Error generating suggestions:', error);
+        const suggestionsDiv = document.getElementById('suggestions');
+        suggestionsDiv.innerHTML = `
+            <div class="error-message" style="color: #dc3545; padding: 10px; background-color: #f8d7da; border-radius: 4px; margin-bottom: 15px;">
+                ${error.message || 'サブタスクの生成に失敗しました。もう一度お試しください。'}
+            </div>
+        `;
         displayManualSubtaskInput(parentTaskId);
     }
 }

@@ -1,6 +1,5 @@
-module.exports = {
-    template: function(taskText) {
-        return `
+export const template = function(taskText) {
+    return `
 あなたはTODOリストのアシスタントです。
 以下の「親タスク: ${taskText}」を実行するために必要なサブタスクを3つ提案してください。
 サブタスクは実用的で具体的であり、行動を示す動詞を用いて表現してください。
@@ -15,11 +14,11 @@ module.exports = {
 - サブタスク1
 - サブタスク2
 - サブタスク3`.trim();
-    },
-    validate: function(response) {
-        if (!response) return false;
-        const lines = response.split('\n')
-            .filter(line => line.trim().startsWith('-'));
-        return lines.length > 0;
-    }
+};
+
+export const validate = function(response) {
+    if (!response) return false;
+    const lines = response.split('\n')
+        .filter(line => line.trim().startsWith('-'));
+    return lines.length > 0;
 }; 

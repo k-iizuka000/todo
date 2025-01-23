@@ -1,4 +1,4 @@
-const validateSubTask = (subtask, isToggleOperation = false) => {
+export const validateSubTask = (subtask, isToggleOperation = false) => {
   const errors = [];
 
   // トグル操作の場合はタイトルのバリデーションをスキップ
@@ -16,8 +16,4 @@ const validateSubTask = (subtask, isToggleOperation = false) => {
     isValid: errors.length === 0,
     errors
   };
-};
-
-module.exports = {
-  validateSubTask
 }; 

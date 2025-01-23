@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { auth } from '../middleware/auth.js';
+import subtaskController from '../controllers/subtask-controller.js';
+
 const router = express.Router();
-const { auth } = require('../middleware/auth');
-const subtaskController = require('../controllers/subtask-controller');
 
 // サブタスク一覧の取得
 router.get('/:taskId/subtasks', auth, subtaskController.getSubtasks);
@@ -21,4 +22,4 @@ router.delete('/:taskId/subtasks/:id', auth, subtaskController.deleteSubtask);
 // サブタスクの完了状態の切り替え
 router.patch('/:taskId/subtasks/:id/toggle', auth, subtaskController.toggleComplete);
 
-module.exports = router;
+export default router;

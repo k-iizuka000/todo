@@ -1,7 +1,12 @@
-const path = require('path');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-class PromptManager {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export class PromptManager {
     constructor() {
         this.prompts = {};
         this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -13,7 +18,7 @@ class PromptManager {
         }
 
         try {
-            const promptModule = require(path.join(__dirname, '..', 'prompts', `${name}.js`));
+            const promptModule = await import(path.join(__dirname, '..', 'prompts', `${name}.js`));
             this.prompts[name] = promptModule;
             return promptModule;
         } catch (error) {
@@ -52,7 +57,7 @@ class PromptManager {
 
             const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
             const result = await model.generateContent(template);
-            const response = result.response.text();
+            const response = await result.response.text();
 
             if (!prompt.validate(response)) {
                 throw new Error('生成されたサブタスクが無効です');
@@ -69,6 +74,4 @@ class PromptManager {
             throw new Error('サブタスク生成中にエラーが発生しました: ' + error.message);
         }
     }
-}
-
-module.exports = new PromptManager(); 
+} 

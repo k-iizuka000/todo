@@ -1,6 +1,6 @@
-const { StatusCodes } = require('http-status-codes');
+import { StatusCodes } from 'http-status-codes';
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(statusCode, message) {
     super(message);
     this.statusCode = statusCode;
@@ -11,27 +11,20 @@ class ApiError extends Error {
   }
 }
 
-class ValidationError extends ApiError {
+export class ValidationError extends ApiError {
   constructor(message) {
     super(StatusCodes.BAD_REQUEST, message);
   }
 }
 
-class AuthenticationError extends ApiError {
+export class AuthenticationError extends ApiError {
   constructor(message = '認証が必要です') {
     super(StatusCodes.UNAUTHORIZED, message);
   }
 }
 
-class NotFoundError extends ApiError {
+export class NotFoundError extends ApiError {
   constructor(message = 'リソースが見つかりません') {
     super(StatusCodes.NOT_FOUND, message);
   }
-}
-
-module.exports = {
-  ApiError,
-  ValidationError,
-  AuthenticationError,
-  NotFoundError
-}; 
+} 

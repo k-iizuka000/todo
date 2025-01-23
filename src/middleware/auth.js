@@ -82,3 +82,35 @@ export const optionalAuth = async (req, res, next) => {
     next()
   }
 }
+
+export const auth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        success: false,
+        message: '認証が必要です'
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = {
+        id: decoded.userId,
+        email: decoded.email
+      };
+      next();
+    } catch (error) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        success: false,
+        message: 'トークンが無効です'
+      });
+    }
+  } catch (error) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: '認証処理中にエラーが発生しました'
+    });
+  }
+};

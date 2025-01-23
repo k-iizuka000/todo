@@ -1,4 +1,4 @@
-const db = require('./db');
+import db from './db.js';
 
 class Task {
   static async create({ title, description, userId }) {
@@ -66,4 +66,4 @@ class Task {
   }
 }
 
-module.exports = Task; 
+export default Task; 
