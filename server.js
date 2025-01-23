@@ -24,6 +24,11 @@ app.use(express.urlencoded({ extended: true }))
 // 静的ファイルの提供
 app.use(express.static(join(__dirname, 'public')))
 
+// ルートパスへのアクセス時の処理
+app.get('/', (req, res) => {
+  res.redirect('/login.html')
+})
+
 // データベース接続
 connectDB().then(() => {
   console.log('データベースに接続しました')
@@ -33,7 +38,7 @@ connectDB().then(() => {
 })
 
 // ルートの登録
-app.use('/', userRoutes)
+app.use('/api', userRoutes)
 
 // Global error handler
 app.use((err, req, res, next) => {
