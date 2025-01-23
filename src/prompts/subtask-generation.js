@@ -18,7 +18,23 @@ export const template = function(taskText) {
 
 export const validate = function(response) {
     if (!response) return false;
+    
+    // 改行で分割して空行を除去
     const lines = response.split('\n')
-        .filter(line => line.trim().startsWith('-'));
-    return lines.length > 0;
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+    
+    // 有効な行が1つもない場合はfalse
+    if (lines.length === 0) return false;
+    
+    // 各行が以下のいずれかの形式で始まっているかチェック
+    const validLines = lines.filter(line => 
+        line.startsWith('-') ||      // ハイフンで始まる
+        line.startsWith('・') ||     // 中点で始まる
+        /^\d+[.．、)]/.test(line) || // 数字+区切り文字で始まる
+        line.startsWith('*')         // アスタリスクで始まる
+    );
+    
+    // 少なくとも1つの有効な行があればtrue
+    return validLines.length > 0;
 }; 
