@@ -31,7 +31,8 @@ class Task {
       const query = `
         SELECT t.*, 
                COUNT(s.id) as subtask_count,
-               COUNT(CASE WHEN s.is_completed THEN 1 END) as completed_subtask_count
+               COUNT(CASE WHEN s.is_completed THEN 1 END) as completed_subtask_count,
+               t.parent_id
         FROM tasks t
         LEFT JOIN subtasks s ON t.id = s.task_id
         WHERE t.user_id = $1

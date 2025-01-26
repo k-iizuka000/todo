@@ -1,3 +1,12 @@
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create tasks table
 CREATE TABLE IF NOT EXISTS tasks (
     id SERIAL PRIMARY KEY,
@@ -8,19 +17,27 @@ CREATE TABLE IF NOT EXISTS tasks (
     due_date TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    user_id INTEGER NOT NULL
+    user_id INTEGER NOT NULL,
+    parent_id INTEGER
 );
 
 -- Create indexes for common queries
 CREATE INDEX idx_tasks_status ON tasks(status);
 CREATE INDEX idx_tasks_user_id ON tasks(user_id);
 CREATE INDEX idx_tasks_due_date ON tasks(due_date);
+CREATE INDEX idx_tasks_parent_id ON tasks(parent_id);
 
--- Add foreign key constraint
+-- Add foreign key constraints
 ALTER TABLE tasks 
 ADD CONSTRAINT fk_tasks_user 
 FOREIGN KEY (user_id) 
 REFERENCES users(id) 
+ON DELETE CASCADE;
+
+ALTER TABLE tasks
+ADD CONSTRAINT fk_tasks_parent
+FOREIGN KEY (parent_id)
+REFERENCES tasks(id)
 ON DELETE CASCADE;
 
 -- Create trigger for updated_at

@@ -33,6 +33,7 @@ class Task {
         task.id = apiTask.id || taskIdCounter++;
         task.completed = Boolean(apiTask.completed);
         task.children = Array.isArray(apiTask.children) ? apiTask.children : [];
+        task.parentId = apiTask.parent_id || null;
         
         // 優先度の取得
         task.priority = typeof apiTask.priority === 'number' ? 
@@ -321,10 +322,33 @@ function addTask(text, parentId = null) {
                     const parentTask = tasks.find(t => t.id === parentId);
                     if (parentTask) {
                         parentTask.children.push(newTask.id);
+                        // 親タスクのアコーディオンを開く
+                        expandedTasks.add(parentId);
                     }
+                }
+                // suggestions divを非表示にする
+                const suggestionsDiv = document.getElementById('suggestions');
+                if (suggestionsDiv) {
+                    suggestionsDiv.style.display = 'none';
                 }
 
                 renderTasks();
+
+
+                // スクロール処理を分岐
+                setTimeout(() => {
+                    if (!parentId) {
+                        // 親タスク追加時は画面トップにスクロール
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        // サブタスク追加時は追加したタスクまでスクロール
+                        const taskElement = document.getElementById(`task-${newTask.id}`);
+                        if (taskElement) {
+                            taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                }, 100);
+
                 if (!text && !parentId) {
                     generateSubtasks(taskText, newTask.id);
                 }
