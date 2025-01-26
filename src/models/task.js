@@ -29,15 +29,36 @@ class Task {
     const client = await pool.connect();
     try {
       const query = `
-        SELECT t.*, 
-               COUNT(s.id) as subtask_count,
-               COUNT(CASE WHEN s.is_completed THEN 1 END) as completed_subtask_count,
-               t.parent_id
-        FROM tasks t
-        LEFT JOIN subtasks s ON t.id = s.task_id
-        WHERE t.user_id = $1
-        GROUP BY t.id
-        ORDER BY t.created_at DESC
+        WITH RECURSIVE task_tree AS (
+          -- 親タスク（parent_idがNULLのタスク）を取得
+          SELECT 
+            t.*,
+            0 as level,
+            ARRAY[t.created_at] as path_order
+          FROM tasks t
+          WHERE t.user_id = $1 AND t.parent_id IS NULL
+          
+          UNION ALL
+          
+          -- サブタスクを再帰的に取得
+          SELECT 
+            t.*,
+            tt.level + 1,
+            tt.path_order || t.created_at
+          FROM tasks t
+          JOIN task_tree tt ON t.parent_id = tt.id
+          WHERE t.user_id = $1
+        )
+        SELECT 
+          tt.*,
+          COUNT(s.id) as subtask_count,
+          COUNT(CASE WHEN s.is_completed THEN 1 END) as completed_subtask_count
+        FROM task_tree tt
+        LEFT JOIN subtasks s ON tt.id = s.task_id
+        GROUP BY tt.id, tt.title, tt.description, tt.status, tt.priority, 
+                 tt.due_date, tt.created_at, tt.updated_at, tt.user_id, 
+                 tt.parent_id, tt.level, tt.path_order
+        ORDER BY tt.path_order, tt.level, tt.created_at DESC
       `;
       const result = await client.query(query, [userId]);
       return result.rows;

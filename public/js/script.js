@@ -29,10 +29,10 @@ class Task {
             return null;
         }
     
-        const task = new Task(apiTask.title || '', apiTask.parentId || null); // title を使用
+        const task = new Task(apiTask.title || '');
         task.id = apiTask.id || taskIdCounter++;
         task.completed = Boolean(apiTask.completed);
-        task.children = Array.isArray(apiTask.children) ? apiTask.children : [];
+        task.children = []; // 初期化のみ行う（buildTaskHierarchyで設定）
         task.parentId = apiTask.parent_id || null;
         
         // 優先度の取得
@@ -41,19 +41,38 @@ class Task {
             PRIORITIES.NORMAL.value;
     
         // dueDate を正しく処理する
-        if (apiTask.dueDate) {
-            const date = new Date(apiTask.dueDate);
-            task.dueDate = isNaN(date.getTime()) ? null : apiTask.dueDate;
+        if (apiTask.due_date) {
+            const date = new Date(apiTask.due_date);
+            task.dueDate = isNaN(date.getTime()) ? null : apiTask.due_date;
         } else {
             task.dueDate = null;
         }
-    
-        task.generationCount = typeof apiTask.generationCount === 'number' ? 
-            Math.max(apiTask.generationCount, 0) : 0;
-    
+        
         return task;
     }
     
+}
+
+// タスクの親子関係を構築する
+function buildTaskHierarchy(tasks) {
+    const taskMap = new Map(tasks.map(task => [task.id, task]));
+    
+    // 全てのタスクのchildren配列を初期化
+    tasks.forEach(task => {
+        task.children = [];
+    });
+
+    // parent_idを基に親子関係を構築
+    tasks.forEach(task => {
+        if (task.parentId) {
+            const parent = taskMap.get(task.parentId);
+            if (parent) {
+                parent.children.push(task);  // IDではなくタスクオブジェクトを追加
+            }
+        }
+    });
+
+    return tasks;
 }
 
 // 初期化時にAPIキーを設定
@@ -85,8 +104,8 @@ async function fetchTasks() {
 
         const apiTasks = await response.json();
         console.log('API Response:', apiTasks);
-
-        // APIレスポンスの構造を確認し、対応する配列を作成
+        console.log('Raw API Response:', JSON.stringify(apiTasks, null, 2));
+        
         let tasksArray;
         if (Array.isArray(apiTasks)) {
             tasksArray = apiTasks;
@@ -96,15 +115,21 @@ async function fetchTasks() {
             tasksArray = [];
         }
         
-        // 配列をTaskオブジェクトに変換
         const newTasks = tasksArray.map(task => Task.fromAPI(task));
-        
-        // 有効なIDの最大値を取得
         const validIds = newTasks.map(t => t.id).filter(id => !isNaN(id) && id !== null);
         taskIdCounter = validIds.length > 0 ? Math.max(...validIds) + 1 : 1;
         
-        // tasks配列を更新
-        tasks = newTasks;
+        tasks = buildTaskHierarchy(newTasks);
+        console.log('Task Hierarchy:', tasks); 
+        // 既存の展開状態を保持しつつ、サブタスクを持つ親タスクを展開
+        const currentExpandedTasks = new Set(expandedTasks);
+        tasks.forEach(task => {
+            if (task.children && task.children.length > 0) {
+                currentExpandedTasks.add(task.id);
+            }
+        });
+        expandedTasks = currentExpandedTasks;
+
         renderTasks();
     } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -321,7 +346,7 @@ function addTask(text, parentId = null) {
                 if (parentId) {
                     const parentTask = tasks.find(t => t.id === parentId);
                     if (parentTask) {
-                        parentTask.children.push(newTask.id);
+                        parentTask.children.push(newTask);
                         // 親タスクのアコーディオンを開く
                         expandedTasks.add(parentId);
                     }
@@ -603,7 +628,7 @@ function renderTask(task) {
             </div>
             ${hasChildren && isExpanded ? `
                 <div class="subtasks">
-                    ${childTasks.map(childTask => renderTask(childTask)).join('')}
+                    ${task.children.map(childTask => renderTask(childTask)).join('')}
                 </div>
             ` : ''}
         </div>
@@ -613,10 +638,9 @@ function renderTask(task) {
 // 全タスクをレンダリング
 function renderTasks() {
     const taskList = document.getElementById('taskList');
-    taskList.innerHTML = tasks
-        .filter(task => !task.parentId)
-        .map(task => renderTask(task))
-        .join('');
+    // ルートタスク（親を持たないタスク）のみを表示
+    const rootTasks = tasks.filter(task => !task.parentId);
+    taskList.innerHTML = rootTasks.map(task => renderTask(task)).join('');
 }
 
 // 優先度変更用のポップアップを表示

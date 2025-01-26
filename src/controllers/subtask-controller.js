@@ -11,7 +11,8 @@ class SubTaskController {
   // サブタスク生成
   async generateSubtasks(req, res, next) {
     try {
-        const { title } = req.body; // taskTitle → title
+        console.log('Request body:', req.body);  // デバッグ用ログ
+        const { title } = req.body;
 
         if (!title) {
             return res.status(StatusCodes.BAD_REQUEST).json({
@@ -20,6 +21,7 @@ class SubTaskController {
             });
         }
 
+        console.log('Generating subtasks for title:', title);  // デバッグ用ログ
         const subtasks = await promptManager.generateSubtasks(title);
 
         return res.status(StatusCodes.OK).json({
