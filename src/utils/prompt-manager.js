@@ -50,7 +50,7 @@ export class PromptManager {
         }
     }
 
-    async generateSubtasks(title, description = '') {
+    async generateSubtasks(title) {
         try {
             const prompt = await this.loadPrompt('subtask-generation');
             const template = await this.getPromptTemplate('subtask-generation', title);

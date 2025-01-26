@@ -11,30 +11,31 @@ class SubTaskController {
   // サブタスク生成
   async generateSubtasks(req, res, next) {
     try {
-      const { taskTitle, taskDescription } = req.body;
+        const { title } = req.body; // taskTitle → title
 
-      if (!taskTitle) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          success: false,
-          message: 'タスクのタイトルは必須です'
+        if (!title) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: 'タスクのタイトルは必須です'
+            });
+        }
+
+        const subtasks = await promptManager.generateSubtasks(title);
+
+        return res.status(StatusCodes.OK).json({
+            success: true,
+            subtasks: subtasks
         });
-      }
-
-      const subtasks = await promptManager.generateSubtasks(taskTitle, taskDescription);
-
-      return res.status(StatusCodes.OK).json({
-        success: true,
-        subtasks: subtasks
-      });
 
     } catch (error) {
-      console.error('サブタスク生成エラー:', error);
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'サブタスクの生成に失敗しました'
-      });
+        console.error('サブタスク生成エラー:', error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'サブタスクの生成に失敗しました'
+        });
     }
-  }
+}
+
 
   // サブタスク一覧の取得
   async getSubtasks(req, res, next) {

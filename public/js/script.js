@@ -15,7 +15,7 @@ const PRIORITIES = {
 class Task {
     constructor(text, parentId = null) {
         this.id = taskIdCounter++;
-        this.text = text;
+        this.title = text;
         this.completed = false;
         this.parentId = parentId;
         this.children = [];
@@ -23,11 +23,92 @@ class Task {
         this.dueDate = null;
         this.generationCount = 0;
     }
+    static fromAPI(apiTask) {
+        if (!apiTask || typeof apiTask !== 'object') {
+            console.error('Invalid API task:', apiTask);
+            return null;
+        }
+    
+        const task = new Task(apiTask.title || '', apiTask.parentId || null); // title を使用
+        task.id = apiTask.id || taskIdCounter++;
+        task.completed = Boolean(apiTask.completed);
+        task.children = Array.isArray(apiTask.children) ? apiTask.children : [];
+        
+        // 優先度の取得
+        task.priority = typeof apiTask.priority === 'number' ? 
+            Math.min(Math.max(apiTask.priority, 0), 3) : 
+            PRIORITIES.NORMAL.value;
+    
+        // dueDate を正しく処理する
+        if (apiTask.dueDate) {
+            const date = new Date(apiTask.dueDate);
+            task.dueDate = isNaN(date.getTime()) ? null : apiTask.dueDate;
+        } else {
+            task.dueDate = null;
+        }
+    
+        task.generationCount = typeof apiTask.generationCount === 'number' ? 
+            Math.max(apiTask.generationCount, 0) : 0;
+    
+        return task;
+    }
+    
 }
 
 // 初期化時にAPIキーを設定
 async function initializeApp() {
-    // APIキーの取得は不要になりました
+    // APIからタスクを取得
+    await fetchTasks();
+}
+
+// タスクをサーバーから取得
+async function fetchTasks() {
+    try {
+        const response = await fetch('/api/tasks', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                alert('ログインセッションが無効です。もう一度ログインしてください。');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            const errorData = await response.json();
+            throw new Error(errorData.message || '不明なエラーが発生しました。しばらくしてから再試行してください。');
+        }
+
+        const apiTasks = await response.json();
+        console.log('API Response:', apiTasks);
+
+        // APIレスポンスの構造を確認し、対応する配列を作成
+        let tasksArray;
+        if (Array.isArray(apiTasks)) {
+            tasksArray = apiTasks;
+        } else if (apiTasks.tasks && Array.isArray(apiTasks.tasks)) {
+            tasksArray = apiTasks.tasks;
+        } else {
+            tasksArray = [];
+        }
+        
+        // 配列をTaskオブジェクトに変換
+        const newTasks = tasksArray.map(task => Task.fromAPI(task));
+        
+        // 有効なIDの最大値を取得
+        const validIds = newTasks.map(t => t.id).filter(id => !isNaN(id) && id !== null);
+        taskIdCounter = validIds.length > 0 ? Math.max(...validIds) + 1 : 1;
+        
+        // tasks配列を更新
+        tasks = newTasks;
+        renderTasks();
+    } catch (error) {
+        console.error('Error fetching tasks:', error);
+        alert('タスクの取得に失敗しました。ページを更新してください。');
+    }
 }
 
 // Gemini APIを使用してサブタスクを生成
@@ -72,17 +153,18 @@ async function generateSubtasks(taskText, parentTaskId) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}` // トークンを追加
             },
             body: JSON.stringify({ 
-                taskTitle: taskText,
-                taskDescription: '' 
+                title: taskText,
+                description: '' 
             })
         });
 
         const data = await response.json();
         
-        if (data.error) {
-            throw new Error(data.error);
+        if (!data.success) {
+            throw new Error(data.message || 'サブタスクの生成に失敗しました');
         }
 
         if (data.subtasks && data.subtasks.length > 0) {
@@ -114,7 +196,7 @@ function displaySuggestions(suggestions, parentTaskId) {
                 <h3 style="margin: 0 0 10px 0;">現在選択中のタスク:</h3>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span style="border-left: 3px solid ${priorityInfo.color}; padding-left: 8px; flex: 1;">
-                        ${parentTask.text}
+                        ${parentTask.title}
                     </span>
                     <span style="color: ${priorityInfo.color}; font-size: 0.9em; padding: 2px 8px; border: 1px solid ${priorityInfo.color}; border-radius: 4px;">
                         ${priorityInfo.label}
@@ -125,7 +207,7 @@ function displaySuggestions(suggestions, parentTaskId) {
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <h3 style="margin: 0;">AIが提案する関連タスク:</h3>
                     ${parentTask.generationCount < 3 ? `
-                        <button onclick="generateSubtasks('${parentTask.text}', ${parentTaskId})" style="padding: 4px 8px; border-radius: 4px;">
+                        <button onclick="generateSubtasks('${parentTask.title}', ${parentTaskId})" style="padding: 4px 8px; border-radius: 4px;">
                             <span style="display: inline-block;">🔄</span>
                         </button>
                     ` : ''}
@@ -166,7 +248,7 @@ function displayManualSubtaskInput(parentTaskId) {
             <h3 style="margin: 0 0 10px 0;">現在選択中のタスク:</h3>
             <div style="display: flex; align-items: center; gap: 10px;">
                 <span style="border-left: 3px solid ${priorityInfo.color}; padding-left: 8px; flex: 1;">
-                    ${parentTask.text}
+                    ${parentTask.title}
                 </span>
                 <span style="color: ${priorityInfo.color}; font-size: 0.9em; padding: 2px 8px; border: 1px solid ${priorityInfo.color}; border-radius: 4px;">
                     ${priorityInfo.label}
@@ -218,19 +300,40 @@ function addTask(text, parentId = null) {
 
         const newTask = new Task(taskText, parentId);
         newTask.dueDate = dueDateInput.value || null;
-        
-        if (parentId) {
-            const parentTask = tasks.find(t => t.id === parentId);
-            if (parentTask) {
-                parentTask.children.push(newTask.id);
-                expandedTasks.add(parentId);
-                const suggestionsDiv = document.getElementById('suggestions');
-                suggestionsDiv.style.display = 'none';
+
+        // DBに新規タスクを保存
+        fetch('/api/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                title: taskText,  // text → title 変更
+                parentId: parentId || null,
+                dueDate: newTask.dueDate
+            })
+        }).then(response => {
+            if (response.ok) {
+                tasks.push(newTask);
+                // 親タスクが存在する場合、children配列を更新
+                if (parentId) {
+                    const parentTask = tasks.find(t => t.id === parentId);
+                    if (parentTask) {
+                        parentTask.children.push(newTask.id);
+                    }
+                }
+
+                renderTasks();
+                if (!text && !parentId) {
+                    generateSubtasks(taskText, newTask.id);
+                }
             }
-        }
-        
-        tasks.push(newTask);
-        renderTasks();
+        }).catch(error => {
+            console.error('Error adding task:', error);
+            alert('タスクの追加に失敗しました。しばらくしてからもう一度お試しください。');
+        });
+
         input.value = '';
         dueDateInput.value = '';
 
@@ -241,12 +344,9 @@ function addTask(text, parentId = null) {
                 taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }, 100);
-
-        if (!text && !parentId) {
-            generateSubtasks(taskText, newTask.id);
-        }
     }
 }
+
 
 // タスクの完了状態を切り替え
 function toggleTask(id) {
@@ -270,36 +370,51 @@ function toggleExpand(id) {
 // タスクを削除
 function deleteTask(id) {
     if (confirm('このタスクを削除してもよろしいですか？\nサブタスクも全て削除されます。')) {
-        // 削除対象のタスクとそのすべての子孫タスクのIDを収集
-        function getAllChildIds(taskId) {
-            const task = tasks.find(t => t.id === taskId);
-            if (!task) return [];
-            const childIds = task.children.flatMap(childId => getAllChildIds(childId));
-            return [taskId, ...childIds];
-        }
-
-        // 削除対象のタスクの親タスクを取得
-        const taskToDelete = tasks.find(t => t.id === id);
-        if (taskToDelete && taskToDelete.parentId) {
-            const parentTask = tasks.find(t => t.id === taskToDelete.parentId);
-            if (parentTask) {
-                // 親タスクのchildren配列から、削除対象のタスクIDを削除
-                parentTask.children = parentTask.children.filter(childId => childId !== id);
+        // DBからタスクを削除するAPIリクエスト
+        fetch(`/api/tasks/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
-        }
+        }).then(response => {
+            if (response.ok) {
+                // 削除対象のタスクとそのすべての子孫タスクのIDを収集
+                function getAllChildIds(taskId) {
+                    const task = tasks.find(t => t.id === taskId);
+                    if (!task) return [];
+                    const childIds = task.children.flatMap(childId => getAllChildIds(childId));
+                    return [taskId, ...childIds];
+                }
 
-        // すべての削除対象タスクIDを取得
-        const idsToDelete = getAllChildIds(id);
-        
-        // 削除対象のタスクとその子孫タスクを tasks 配列から削除
-        tasks = tasks.filter(t => !idsToDelete.includes(t.id));
-        
-        // 残っているタスクの children 配列から、削除されたタスクのIDを除去
-        tasks.forEach(task => {
-            task.children = task.children.filter(childId => !idsToDelete.includes(childId));
+                // 削除対象のタスクの親タスクを取得
+                const taskToDelete = tasks.find(t => t.id === id);
+                if (taskToDelete && taskToDelete.parentId) {
+                    const parentTask = tasks.find(t => t.id === taskToDelete.parentId);
+                    if (parentTask) {
+                        // 親タスクのchildren配列から、削除対象のタスクIDを削除
+                        parentTask.children = parentTask.children.filter(childId => childId !== id);
+                    }
+                }
+
+                // すべての削除対象タスクIDを取得
+                const idsToDelete = getAllChildIds(id);
+                
+                // 削除対象のタスクとその子孫タスクを tasks 配列から削除
+                tasks = tasks.filter(t => !idsToDelete.includes(t.id));
+                
+                // 残っているタスクの children 配列から、削除されたタスクのIDを除去
+                tasks.forEach(task => {
+                    task.children = task.children.filter(childId => !idsToDelete.includes(childId));
+                });
+                
+                renderTasks();
+            } else {
+                alert('タスクの削除に失敗しました。しばらくしてからもう一度お試しください。');
+            }
+        }).catch(error => {
+            console.error('Error deleting task:', error);
+            alert('タスクの削除に失敗しました。しばらくしてからもう一度お試しください。');
         });
-        
-        renderTasks();
     }
 }
 
@@ -324,8 +439,8 @@ function saveEdit(taskId) {
     
     if (task && editInput) {
         const newText = editInput.value.trim();
-        if (newText !== task.text || dateInput.value !== task.dueDate) {
-            task.text = newText;
+        if (newText !== task.title || dateInput.value !== task.dueDate) {
+            task.title = newText;
             task.dueDate = dateInput.value || null;
             editingTaskId = null;
             renderTasks();
@@ -371,7 +486,7 @@ function handleAddSubtask(parentId) {
             displayManualSubtaskInput(parentId);
             return;
         }
-        generateSubtasks(task.text, parentId);
+        generateSubtasks(task.title, parentId);
     }
 }
 
@@ -409,7 +524,7 @@ function renderTask(task) {
     
     const taskContent = isEditing ? `
         <div class="edit-mode">
-            <input type="text" id="edit-input-${task.id}" value="${task.text}"
+            <input type="text" id="edit-input-${task.id}" value="${task.title}"
                 onkeypress="if(event.key === 'Enter') saveEdit(${task.id})"
             >
             <input type="date" id="edit-date-${task.id}" value="${task.dueDate || ''}"
@@ -428,7 +543,7 @@ function renderTask(task) {
             <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
             <span class="${task.completed ? 'completed' : ''}" 
                   style="border-left: 3px solid ${priorityInfo.color}; padding-left: 8px;">
-                ${task.text}
+                ${task.title}
             </span>
             ${task.dueDate ? `
                 <span class="due-date ${getDueDateStatus(task.dueDate)}">

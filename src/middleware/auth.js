@@ -114,3 +114,31 @@ export const auth = async (req, res, next) => {
     });
   }
 };
+
+export const authenticateUser = (req, res, next) => {
+  try {
+    // ヘッダーからトークンを取得
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: '認証が必要です' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    // トークンの検証
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // ユーザー情報をリクエストに追加
+    req.user = { id: decoded.id };
+    
+    next();
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: '無効なトークンです' });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'トークンの有効期限が切れています' });
+    }
+    next(error);
+  }
+};
