@@ -33,7 +33,7 @@ class Task {
         task.id = apiTask.id || taskIdCounter++;
         task.completed = Boolean(apiTask.completed);
         task.children = []; // 初期化のみ行う（buildTaskHierarchyで設定）
-        task.parentId = apiTask.parent_id || null;
+        task.parentId = apiTask.parent_id !== undefined ? apiTask.parent_id : null;
         
         // 優先度の取得
         task.priority = typeof apiTask.priority === 'number' ? 
@@ -335,64 +335,72 @@ function addTask(text, parentId = null) {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify({
-                title: taskText,  // text → title 変更
-                parentId: parentId || null,
+                title: taskText,
+                parent_id: parentId !== undefined ? parentId : null,
                 dueDate: newTask.dueDate
             })
-        }).then(response => {
-            if (response.ok) {
-                tasks.push(newTask);
-                // 親タスクが存在する場合、children配列を更新
-                if (parentId) {
-                    const parentTask = tasks.find(t => t.id === parentId);
-                    if (parentTask) {
-                        parentTask.children.push(newTask);
-                        // 親タスクのアコーディオンを開く
-                        expandedTasks.add(parentId);
-                    }
-                }
-                // suggestions divを非表示にする
-                const suggestionsDiv = document.getElementById('suggestions');
-                if (suggestionsDiv) {
-                    suggestionsDiv.style.display = 'none';
-                }
+        }).then(response => response.json())
+        .then(data => {
+            const serverTask = Task.fromAPI(data);
+            
+            // 既存のタスクを更新または新規追加
+            const existingTaskIndex = tasks.findIndex(t => t.id === serverTask.id);
+            if (existingTaskIndex !== -1) {
+                tasks[existingTaskIndex] = serverTask;
+            } else {
+                tasks.push(serverTask);
+            }
 
-                renderTasks();
-
-
-                // スクロール処理を分岐
-                setTimeout(() => {
-                    if (!parentId) {
-                        // 親タスク追加時は画面トップにスクロール
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+            // 親タスクが存在する場合、children配列を更新
+            if (parentId) {
+                const parentTask = tasks.find(t => t.id === parentId);
+                if (parentTask) {
+                    // 重複を防ぐため、既存の子タスクをチェック
+                    const existingChildIndex = parentTask.children.findIndex(child => child.id === serverTask.id);
+                    if (existingChildIndex !== -1) {
+                        parentTask.children[existingChildIndex] = serverTask;
                     } else {
-                        // サブタスク追加時は追加したタスクまでスクロール
-                        const taskElement = document.getElementById(`task-${newTask.id}`);
-                        if (taskElement) {
-                            taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
+                        parentTask.children.push(serverTask);
                     }
-                }, 100);
-
-                if (!text && !parentId) {
-                    generateSubtasks(taskText, newTask.id);
+                    // 親タスクのアコーディオンを開く
+                    expandedTasks.add(parentId);
                 }
             }
-        }).catch(error => {
+
+            // suggestions divを非表示にする
+            const suggestionsDiv = document.getElementById('suggestions');
+            if (suggestionsDiv) {
+                suggestionsDiv.style.display = 'none';
+            }
+
+            renderTasks();
+
+            // スクロール処理を分岐
+            setTimeout(() => {
+                if (!parentId) {
+                    // 親タスク追加時は画面トップにスクロール
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    // サブタスク追加時は追加したタスクまでスクロール
+                    const taskElement = document.getElementById(`task-${serverTask.id}`);
+                    if (taskElement) {
+                        taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }, 100);
+
+            // サブタスク生成の条件
+            if (!text && !parentId) {
+                generateSubtasks(taskText, serverTask.id);
+            }
+        })
+        .catch(error => {
             console.error('Error adding task:', error);
             alert('タスクの追加に失敗しました。しばらくしてからもう一度お試しください。');
         });
 
         input.value = '';
         dueDateInput.value = '';
-
-        // 新しく追加されたタスクまでスクロール
-        setTimeout(() => {
-            const taskElement = document.getElementById(`task-${newTask.id}`);
-            if (taskElement) {
-                taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }, 100);
     }
 }
 
@@ -562,12 +570,13 @@ function renderTask(task) {
         return '';
     }
 
-    const hasChildren = task.children.length > 0;
+    // サブタスクを取得
+    const childTasks = tasks.filter(t => t.parentId === task.id);
+    const hasChildren = childTasks.length > 0;
     const isExpanded = expandedTasks.has(task.id);
-    const childTasks = tasks.filter(t => task.children.includes(t.id));
     const isEditing = editingTaskId === task.id;
     const currentLevel = getTaskLevel(task);
-    const canAddSubtask = currentLevel < 3; // 現在のレベルが3未満の場合のみサブタスク追加可能
+    const canAddSubtask = currentLevel < 3;
     
     const priorityInfo = Object.values(PRIORITIES).find(p => p.value === task.priority);
     
@@ -628,7 +637,7 @@ function renderTask(task) {
             </div>
             ${hasChildren && isExpanded ? `
                 <div class="subtasks">
-                    ${task.children.map(childTask => renderTask(childTask)).join('')}
+                    ${childTasks.map(childTask => renderTask(childTask)).join('')}
                 </div>
             ` : ''}
         </div>

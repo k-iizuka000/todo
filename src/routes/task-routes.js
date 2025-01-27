@@ -34,15 +34,25 @@ router.get('/:id', async (req, res, next) => {
 // タスクの作成
 router.post('/', validateTask, async (req, res, next) => {
   try {
-    const { title, description, dueDate } = req.body;
+    const { title, description, dueDate, parent_id } = req.body;
+    console.log('Creating task with:', { title, description, dueDate, parent_id });  // デバッグログ追加
+
     const task = await Task.create({
       title,
       description,
       userId: req.user.id,
-      dueDate: dueDate ? new Date(dueDate) : null
+      dueDate: dueDate ? new Date(dueDate) : null,
+      parentId: parent_id === undefined ? null : parent_id  // 修正
     });
-    res.status(201).json(task);
+
+    // 作成したタスクと関連する親タスクの情報を取得
+    const taskWithHierarchy = await Task.findById(task.id, req.user.id);
+    res.status(201).json(taskWithHierarchy);
   } catch (error) {
+    console.error('タスク作成エラー:', error);  // デバッグログ追加
+    if (error.message === '親タスクが見つかりません') {
+      return res.status(404).json({ message: error.message });
+    }
     next(error);
   }
 });

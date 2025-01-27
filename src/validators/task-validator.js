@@ -1,6 +1,6 @@
 // タスクのバリデーション
 export const validateTask = (req, res, next) => {
-  const { title, description, status, dueDate } = req.body;
+  const { title, description, status, dueDate, parent_id } = req.body;
 
   // タイトルのバリデーション
   if (!title || typeof title !== 'string' || title.trim().length === 0) {
@@ -13,6 +13,13 @@ export const validateTask = (req, res, next) => {
   // 説明のバリデーション（任意）
   if (description !== undefined && typeof description !== 'string') {
     return res.status(400).json({ message: '説明は文字列で入力してください' });
+  }
+
+  // 親タスクIDのバリデーション（任意）
+  if (parent_id !== undefined && parent_id !== null) {
+    if (!Number.isInteger(Number(parent_id)) || Number(parent_id) <= 0) {
+      return res.status(400).json({ message: '親タスクIDが無効です' });
+    }
   }
 
   // ステータスのバリデーション（更新時のみ）
