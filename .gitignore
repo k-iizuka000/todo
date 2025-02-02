@@ -9,3 +9,6 @@ memo.md
 node_modules/*
 .env*
 docs/*
+plan/*
+.DS_Store
+project-structure.md

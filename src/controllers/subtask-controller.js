@@ -53,10 +53,14 @@ class SubTaskController {
         return next(new ApiError(403, 'このタスクへのアクセス権がありません'));
       }
 
-      const subtasks = await SubTask.findByTaskId(taskId);
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return next(new ApiError(401, '認証トークンが必要です'));
+      }
+
       res.status(200).json({
         status: 'success',
-        data: subtasks
+        data: task.children || []
       });
     } catch (error) {
       next(new ApiError(500, error.message));
@@ -82,10 +86,17 @@ class SubTaskController {
         return next(new ApiError(400, errors.join(', ')));
       }
 
-      const subtask = await SubTask.create({
-        ...req.body,
-        taskId: taskId
-      });
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return next(new ApiError(401, '認証トークンが必要です'));
+      }
+      const subtask = await Task.create({
+        title: req.body.title,
+        description: req.body.description,
+        user_id: req.user.id,
+        due_date: null,
+        parent_id: parseInt(taskId, 10)
+      }, token);
 
       res.status(201).json({
         status: 'success',
@@ -110,12 +121,12 @@ class SubTaskController {
         return next(new ApiError(403, 'このタスクへのアクセス権がありません'));
       }
 
-      const subtask = await SubTask.findById(id);
-      if (!subtask) {
-        return next(new ApiError(404, 'サブタスクが見つかりません'));
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return next(new ApiError(401, '認証トークンが必要です'));
       }
-
-      if (subtask.taskId !== taskId) {
+      const subtask = await Task.findById(id, req.user.id, token);
+      if (subtask.parent_id !== parseInt(taskId, 10)) {
         return next(new ApiError(400, 'サブタスクは指定されたタスクに属していません'));
       }
 
@@ -124,7 +135,7 @@ class SubTaskController {
         return next(new ApiError(400, errors.join(', ')));
       }
 
-      const updatedSubtask = await SubTask.update(id, req.body);
+      const updatedSubtask = await Task.update(id, req.user.id, req.body, token);
       res.status(200).json({
         status: 'success',
         data: updatedSubtask
@@ -148,16 +159,16 @@ class SubTaskController {
         return next(new ApiError(403, 'このタスクへのアクセス権がありません'));
       }
 
-      const subtask = await SubTask.findById(id);
-      if (!subtask) {
-        return next(new ApiError(404, 'サブタスクが見つかりません'));
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return next(new ApiError(401, '認証トークンが必要です'));
       }
-
-      if (subtask.taskId !== taskId) {
+      const subtask = await Task.findById(id, req.user.id, token);
+      if (subtask.parent_id !== parseInt(taskId, 10)) {
         return next(new ApiError(400, 'サブタスクは指定されたタスクに属していません'));
       }
 
-      await SubTask.delete(id);
+      await Task.delete(id, req.user.id, token);
       res.status(200).json({
         status: 'success',
         message: 'サブタスクが削除されました'
@@ -181,16 +192,17 @@ class SubTaskController {
         return next(new ApiError(403, 'このタスクへのアクセス権がありません'));
       }
 
-      const subtask = await SubTask.findById(id);
-      if (!subtask) {
-        return next(new ApiError(404, 'サブタスクが見つかりません'));
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return next(new ApiError(401, '認証トークンが必要です'));
       }
-
-      if (subtask.taskId !== parseInt(taskId)) {
+      const subtask = await Task.findById(id, req.user.id, token);
+      if (subtask.parent_id !== parseInt(taskId, 10)) {
         return next(new ApiError(400, 'サブタスクは指定されたタスクに属していません'));
       }
 
-      const updatedSubtask = await SubTask.toggleComplete(id);
+      const newStatus = subtask.status === 'pending' ? 'done' : 'pending';
+      const updatedSubtask = await Task.update(id, req.user.id, { status: newStatus }, token);
       res.status(200).json({
         status: 'success',
         data: updatedSubtask

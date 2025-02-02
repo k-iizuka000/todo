@@ -3,35 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini TODO List</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>AI搭載 TODO List</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    <!-- Supabaseクライアントの追加 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
 </head>
-<script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        // 初期化処理
-        await initializeApp();
-        
-        // ローカルストレージにトークンがある場合のみタスクを取得するように変更
-        if (typeof window !== 'undefined' && window.localStorage) {
-            const token = localStorage.getItem('token');
-            if (token) {
+<body>
+    <header>
+        <h1>AI Todo</h1>
+        <button id="logoutBtn" onclick="logout()">ログアウト</button>
+    </header>
+    <main>
+        <div class="todo-container">
+            <form id="taskForm" onsubmit="addTask(event)">
+                <div class="input-container">
+                    <div class="input-title-row">
+                        <input type="text" id="taskTitle" placeholder="新しいタスクを入力...">
+                    </div>
+                    <div class="input-button-row">
+                        <input type="date" id="dueDateInput">
+                        <button type="submit">追加</button>
+                        <button type="button" id="toggleCompletedBtn" onclick="toggleCompletedTasks()">完了タスクを表示/非表示</button>
+                    </div>
+                </div>
+            </form>
+            <div id="suggestions" class="suggestions" style="display: none;"></div>
+            <div id="taskList"></div>
+        </div>
+    </main>
+    <footer>
+        <p>© 2025 AI Todo. All rights reserved.</p>
+    </footer>
+    <!-- スクリプトを body の最後に移動 -->
+    <script src="js/script.js"></script>
+    <script>
+        // アプリケーションの初期化
+        async function initApp() {
+            try {
+                // 認証の初期化を先に行う
+                const session = await initializeAuth();
+                if (!session) {
+                    console.error('認証セッションが存在しません');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                // タスクの取得
                 await fetchTasks();
+            } catch (error) {
+                console.error('初期化エラー:', error);
+                window.location.href = '/login.html';
             }
         }
-    });
-</script>
-<body>
-    <div class="todo-container">
-        <h1>Gemini搭載TODOリスト</h1>
-        <div class="input-container">
-            <input type="text" id="taskInput" placeholder="新しいタスクを入力...">
-            <input type="date" id="dueDateInput">
-            <button onclick="addTask()">追加</button>
-            <button id="toggleCompletedBtn" onclick="toggleCompletedTasks()">完了タスクを表示/非表示</button>
-        </div>
-        <div id="suggestions" class="suggestions" style="display: none;"></div>
-        <div id="taskList"></div>
-    </div>
-    <script src="js/script.js"></script>
+
+        // ページ読み込み完了時の処理
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+
+        function logout() {
+            // Supabaseのサインアウト処理を実行し、ログインページにリダイレクトします
+            supabaseClient.auth.signOut()
+                .then(() => {
+                    window.location.href = '/login.html';
+                })
+                .catch((error) => {
+                    console.error('ログアウトに失敗しました:', error);
+                    alert('ログアウトに失敗しました');
+                });
+        }
+    </script>
 </body>
 </html>

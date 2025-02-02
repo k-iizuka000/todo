@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ユーザー登録 - ToDoアプリ</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="/js/supabase.js" defer></script>
 </head>
 <body class="bg-gray-100 h-screen flex items-center justify-center">
     <div class="bg-white p-8 rounded-lg shadow-md w-96">
@@ -94,24 +96,26 @@
 
             if (isValid) {
                 try {
-                    const response = await fetch('/api/register', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            email: emailInput.value,
-                            password: passwordInput.value
-                        }),
+                    const { data, error } = await supabaseClient.auth.signUp({
+                        email: emailInput.value,
+                        password: passwordInput.value,
+                        options: {
+                            emailRedirectTo: `${window.location.origin}/login.html`
+                        }
                     });
 
-                    const data = await response.json();
-                    if (data.success) {
-                        alert('登録が完了しました');
-                        window.location.href = '/login.html';
-                    } else {
-                        alert(data.message || '登録に失敗しました');
+                    if (error) {
+                        if (error.message.includes('already registered')) {
+                            emailError.textContent = 'このメールアドレスは既に登録されています';
+                            emailError.classList.remove('hidden');
+                        } else {
+                            alert(error.message || '登録に失敗しました');
+                        }
+                        return;
                     }
+
+                    alert('確認メールを送信しました。メールをご確認ください。');
+                    window.location.href = '/login.html';
                 } catch (error) {
                     console.error('Error:', error);
                     alert('エラーが発生しました');
